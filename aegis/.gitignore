@@ -1,0 +1,92 @@
+# ===============================
+# Python bytecode / cache
+# ===============================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ===============================
+# Virtual environments
+# ===============================
+venv/
+.venv/
+env/
+ENV/
+
+# ===============================
+# Test artifacts
+# ===============================
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Hypothesis property-based testing
+.hypothesis/
+
+# ===============================
+# Logs & runtime output
+# ===============================
+*.log
+logs/
+
+# ===============================
+# Build / distribution artifacts
+# ===============================
+build/
+dist/
+*.egg-info/
+
+# ===============================
+# IDE / Editor files
+# ===============================
+.hypothesis/
+.pytest_cache/
+__pycache__/
+.kiro
+.vscode/
+.idea/
+*.iml
+
+# ===============================
+# OS generated files
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Temporary files
+# ===============================
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# ===============================
+# Project-specific runtime data
+# ===============================
+
+# Trust score persistence (if stored locally)
+trust_data/
+*.trust
+
+# Optimized execution cache
+code_cache/
+*.cache
+
+# Runtime metrics dumps
+metrics/
+*.metrics
+
+# ===============================
+# Mermaid / diagram exports
+# ===============================
+*.svg
+*.png
+*.pdf
+
+# ===============================
+# CLI output dumps
+# ===============================
+output/
+*.out
