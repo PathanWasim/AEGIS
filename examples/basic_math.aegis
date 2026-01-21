@@ -1,0 +1,9 @@
+# Basic arithmetic example for AEGIS
+# This program demonstrates variable assignment and arithmetic operations
+
+x = 10
+y = 20
+sum = x + y
+product = x * y
+print sum
+print product

@@ -1,0 +1,17 @@
+# AEGIS - Adaptive Execution Guarded Interpreter System
+# Dependencies for the academic compiler design project
+
+# Property-based testing framework
+hypothesis>=6.0.0
+
+# Standard testing framework
+pytest>=7.0.0
+
+# Type checking support
+mypy>=1.0.0
+
+# Code formatting
+black>=22.0.0
+
+# Linting
+flake8>=5.0.0
