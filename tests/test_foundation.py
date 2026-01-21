@@ -92,14 +92,17 @@ class TestProjectStructure:
         assert assignment.identifier == "x"
         assert assignment.expression == identifier
     
-    def test_lexer_placeholder(self):
-        """Test that lexer placeholder works."""
+    def test_lexer_implementation(self):
+        """Test that lexer implementation works correctly."""
         lexer = Lexer()
         tokens = lexer.tokenize("x = 42")
         
-        # Placeholder should return EOF token
-        assert len(tokens) == 1
-        assert tokens[0].type == TokenType.EOF
+        # Should return proper tokens now
+        assert len(tokens) == 4  # identifier, assign, integer, EOF
+        assert tokens[0].type == TokenType.IDENTIFIER
+        assert tokens[1].type == TokenType.ASSIGN
+        assert tokens[2].type == TokenType.INTEGER
+        assert tokens[3].type == TokenType.EOF
     
     def test_parser_placeholder(self):
         """Test that parser placeholder works."""
