@@ -116,11 +116,16 @@ class SandboxedInterpreter(ASTVisitor):
         self._check_integer_bounds(value)
         
         # Store the variable
-        context.set_variable(node.identifier, value)
+        if isinstance(node.identifier, str):
+            identifier_name = node.identifier
+        else:
+            identifier_name = node.identifier.name
+            
+        context.set_variable(identifier_name, value)
         
         # Record variable access
         if self.runtime_monitor:
-            self.runtime_monitor.record_variable_access(node.identifier, "write")
+            self.runtime_monitor.record_variable_access(identifier_name, "write")
         
         return None
     

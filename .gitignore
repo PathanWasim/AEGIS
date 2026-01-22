@@ -14,15 +14,13 @@ env/
 ENV/
 
 # ===============================
-# Test artifacts
+# Testing artifacts
 # ===============================
 .pytest_cache/
-.coverage
-htmlcov/
-coverage.xml
-
-# Hypothesis property-based testing
 .hypothesis/
+.coverage
+coverage.xml
+htmlcov/
 
 # ===============================
 # Logs & runtime output
@@ -40,13 +38,10 @@ dist/
 # ===============================
 # IDE / Editor files
 # ===============================
-.hypothesis/
-.pytest_cache/
-__pycache__/
-.kiro
 .vscode/
 .idea/
 *.iml
+.kiro/
 
 # ===============================
 # OS generated files
@@ -66,7 +61,7 @@ Thumbs.db
 # Project-specific runtime data
 # ===============================
 
-# Trust score persistence (if stored locally)
+# Trust score persistence
 trust_data/
 *.trust
 
@@ -79,7 +74,7 @@ metrics/
 *.metrics
 
 # ===============================
-# Mermaid / diagram exports
+# Generated outputs / diagrams
 # ===============================
 *.svg
 *.png
