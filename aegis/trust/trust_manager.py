@@ -325,6 +325,34 @@ class TrustManager:
         trust_score = self.get_trust_score(code_hash)
         return trust_score.is_eligible_for_optimization(self.trust_threshold)
     
+    def revoke_trust_for_violation(self, code_hash: str, violation_type: str, details: str) -> None:
+        """
+        Revoke trust for specific code due to security violation.
+        
+        Args:
+            code_hash: Hash of the code
+            violation_type: Type of security violation
+            details: Details about the violation
+        """
+        if code_hash in self.trust_scores:
+            old_score = self.trust_scores[code_hash].current_score
+            self.trust_scores[code_hash].reset_trust(f"security_violation_{violation_type}")
+            
+            print(f"[TRUST] Revoked trust for code {code_hash[:8]}... "
+                  f"(was {old_score:.2f}, now 0.00) - {violation_type}: {details}")
+            
+            self._save_trust_data()
+        else:
+            # Create new trust score with violation
+            trust_score = TrustScore(code_hash=code_hash)
+            trust_score.reset_trust(f"security_violation_{violation_type}")
+            self.trust_scores[code_hash] = trust_score
+            
+            print(f"[TRUST] Created new trust record for code {code_hash[:8]}... "
+                  f"with violation - {violation_type}: {details}")
+            
+            self._save_trust_data()
+    
     def revoke_trust(self, code_hash: str, reason: str = "manual_revocation") -> None:
         """
         Revoke trust for specific code.

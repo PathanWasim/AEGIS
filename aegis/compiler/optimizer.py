@@ -273,6 +273,22 @@ class OptimizedExecutor:
             'variable_propagation': 0.25,
             'expression_simplification': 0.15
         }
+        
+        # Rollback integration
+        self.rollback_handler = None
+    
+    def set_rollback_handler(self, rollback_handler) -> None:
+        """
+        Set rollback handler for security violations.
+        
+        Args:
+            rollback_handler: RollbackHandler instance
+        """
+        self.rollback_handler = rollback_handler
+        
+        # Register cache clearing callback
+        if rollback_handler:
+            rollback_handler.register_cache_clear_callback(self.clear_cache)
     
     def execute_optimized(self, code_hash: str, ast: List[ASTNode], 
                          context: ExecutionContext) -> ExecutionMetrics:
@@ -318,9 +334,23 @@ class OptimizedExecutor:
             print(f"[OPTIMIZER] Using cached optimized code {code_hash[:8]}... "
                   f"(cache hit, {cached_code.access_count} previous uses)")
         
+        # Set execution mode for rollback decisions
+        self.monitor.set_execution_mode('optimized', code_hash)
+        
         # Execute optimized AST with monitoring
         execution_start = time.time()
-        self._execute_optimized_ast(optimized_ast, context)
+        try:
+            self._execute_optimized_ast(optimized_ast, context)
+        except Exception as e:
+            # Handle any exceptions during optimized execution
+            if self.rollback_handler:
+                print(f"[OPTIMIZER] Exception in optimized execution: {e}")
+                # Let the monitor handle the rollback through its violation detection
+            raise
+        finally:
+            # Reset execution mode
+            self.monitor.set_execution_mode('sandboxed', None)
+        
         execution_time = time.time() - execution_start
         
         # Calculate performance metrics

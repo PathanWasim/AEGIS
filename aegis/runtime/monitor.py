@@ -7,7 +7,7 @@ and violation detection for the trust management system.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 from datetime import datetime
 from ..interpreter.context import ExecutionContext
 
@@ -31,6 +31,11 @@ class ExecutionMetrics:
     print_operations: int = 0
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
+    
+    # Optimization-related metrics
+    optimization_applied: bool = False
+    cache_hit: bool = False
+    speedup_factor: float = 1.0
     
     def add_operation(self, operation_type: str, details: str = "") -> None:
         """
@@ -85,7 +90,10 @@ class ExecutionMetrics:
             'arithmetic_operations': self.arithmetic_operations,
             'assignment_operations': self.assignment_operations,
             'print_operations': self.print_operations,
-            'operations_per_second': self.get_operations_per_second()
+            'operations_per_second': self.get_operations_per_second(),
+            'optimization_applied': self.optimization_applied,
+            'cache_hit': self.cache_hit,
+            'speedup_factor': self.speedup_factor
         }
 
 
@@ -128,6 +136,31 @@ class RuntimeMonitor:
         self.memory_threshold = 1024 * 1024  # 1MB memory limit
         self.is_monitoring = False
         self.monitored_context: Optional[ExecutionContext] = None
+        
+        # Rollback integration
+        self.rollback_callback: Optional[Callable[[List[SecurityViolation], str, str], None]] = None
+        self.current_execution_mode = 'sandboxed'
+        self.current_code_hash = None
+    
+    def register_rollback_callback(self, callback: Callable[[List[SecurityViolation], str, str], None]) -> None:
+        """
+        Register callback for rollback handling.
+        
+        Args:
+            callback: Function to call when violations require rollback (violations, execution_mode, code_hash)
+        """
+        self.rollback_callback = callback
+    
+    def set_execution_mode(self, mode: str, code_hash: str = None) -> None:
+        """
+        Set current execution mode for rollback decisions.
+        
+        Args:
+            mode: Execution mode ('sandboxed' or 'optimized')
+            code_hash: Hash of code being executed
+        """
+        self.current_execution_mode = mode
+        self.current_code_hash = code_hash
     
     def start_monitoring(self, execution_context: ExecutionContext) -> None:
         """
@@ -300,6 +333,15 @@ class RuntimeMonitor:
             if self.current_metrics:
                 self.current_metrics.violations_detected.extend(violations)
             
+            # Trigger rollback if in optimized mode and callback is registered
+            if (self.rollback_callback and 
+                self.current_execution_mode == 'optimized' and 
+                self.current_code_hash):
+                try:
+                    self.rollback_callback(violations, self.current_execution_mode, self.current_code_hash)
+                except Exception as e:
+                    print(f"[MONITOR] Warning: Rollback callback failed - {e}")
+            
             # Raise the first violation
             raise violations[0]
     
@@ -315,6 +357,15 @@ class RuntimeMonitor:
         
         if self.current_metrics:
             self.current_metrics.violations_detected.append(violation)
+        
+        # Trigger rollback if in optimized mode and callback is registered
+        if (self.rollback_callback and 
+            self.current_execution_mode == 'optimized' and 
+            self.current_code_hash):
+            try:
+                self.rollback_callback([violation], self.current_execution_mode, self.current_code_hash)
+            except Exception as e:
+                print(f"[MONITOR] Warning: Rollback callback failed - {e}")
         
         raise violation
     
