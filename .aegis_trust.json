@@ -1,0 +1,147 @@
+{
+  "trust_scores": {
+    "27774508de104909": {
+      "code_hash": "27774508de104909",
+      "current_score": 1.27,
+      "execution_count": 8,
+      "successful_executions": 8,
+      "violation_count": 0,
+      "last_execution": "2026-01-23T21:25:45.709995",
+      "last_violation": null,
+      "first_execution": "2026-01-23T21:19:23.154345",
+      "trust_history": [
+        {
+          "timestamp": "2026-01-23T21:19:23.154345",
+          "score_before": 0.14,
+          "score_after": 0.28,
+          "execution_count": 1,
+          "had_violations": [],
+          "instruction_count": 15,
+          "execution_time": 0.0,
+          "increment": 0.14,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-23T21:20:02.800646",
+          "score_before": 0.28,
+          "score_after": 0.42000000000000004,
+          "execution_count": 2,
+          "had_violations": [],
+          "instruction_count": 15,
+          "execution_time": 0.0,
+          "increment": 0.14,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-23T21:22:04.133463",
+          "score_before": 0.42000000000000004,
+          "score_after": 0.56,
+          "execution_count": 3,
+          "had_violations": [],
+          "instruction_count": 15,
+          "execution_time": 0.001,
+          "increment": 0.14,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-23T21:22:16.949337",
+          "score_before": 0.56,
+          "score_after": 0.7000000000000001,
+          "execution_count": 4,
+          "had_violations": [],
+          "instruction_count": 15,
+          "execution_time": 0.0,
+          "increment": 0.14,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-23T21:22:44.612750",
+          "score_before": 0.7000000000000001,
+          "score_after": 0.8900000000000001,
+          "execution_count": 5,
+          "had_violations": [],
+          "instruction_count": 15,
+          "execution_time": 0.0,
+          "increment": 0.19000000000000006,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-23T21:22:55.546804",
+          "score_before": 0.8900000000000001,
+          "score_after": 1.08,
+          "execution_count": 6,
+          "had_violations": [],
+          "instruction_count": 15,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-23T21:25:38.041330",
+          "score_before": 1.08,
+          "score_after": 1.27,
+          "execution_count": 7,
+          "had_violations": [],
+          "instruction_count": 15,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-23T21:25:45.709995",
+          "score_before": 1.27,
+          "score_after": 1.27,
+          "execution_count": 8,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.00039399838915058215
+        }
+      ]
+    },
+    "dc17e17a2a7ddf3d": {
+      "code_hash": "dc17e17a2a7ddf3d",
+      "current_score": 0.14,
+      "execution_count": 1,
+      "successful_executions": 1,
+      "violation_count": 0,
+      "last_execution": "2026-01-23T21:22:04.137870",
+      "last_violation": null,
+      "first_execution": "2026-01-23T21:22:04.137870",
+      "trust_history": [
+        {
+          "timestamp": "2026-01-23T21:22:04.137870",
+          "score_before": 0.14,
+          "score_after": 0.14,
+          "execution_count": 1,
+          "had_violations": [],
+          "instruction_count": 17,
+          "execution_time": 0.001404
+        }
+      ]
+    },
+    "a962b319b6d7b4a8": {
+      "code_hash": "a962b319b6d7b4a8",
+      "current_score": 0.14,
+      "execution_count": 1,
+      "successful_executions": 1,
+      "violation_count": 0,
+      "last_execution": "2026-01-23T21:22:04.146877",
+      "last_violation": null,
+      "first_execution": "2026-01-23T21:22:04.146877",
+      "trust_history": [
+        {
+          "timestamp": "2026-01-23T21:22:04.146877",
+          "score_before": 0.14,
+          "score_after": 0.14,
+          "execution_count": 1,
+          "had_violations": [],
+          "instruction_count": 17,
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "trust_threshold": 1.0,
+  "optimization_enabled": true,
+  "last_updated": "2026-01-23T21:25:45.709995"
+}
