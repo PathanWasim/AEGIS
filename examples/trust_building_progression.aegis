@@ -1,0 +1,15 @@
+step = 1
+doubled = step * 2
+tripled = step * 3
+quadrupled = step * 4
+
+sum_result = doubled + tripled
+product_result = doubled * tripled
+difference = quadrupled - doubled
+
+print sum_result
+print product_result
+print difference
+
+final_calculation = sum_result + product_result - difference
+print final_calculation

@@ -1,0 +1,17 @@
+a = 15
+b = 8
+c = 3
+d = 2
+
+result1 = a + b * c - d
+result2 = a * b / d + c
+result3 = a - b + c * d
+result4 = a / d + b - c
+
+print result1
+print result2
+print result3
+print result4
+
+final_result = result1 + result2 - result3 + result4
+print final_result

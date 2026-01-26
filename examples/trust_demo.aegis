@@ -1,7 +1,3 @@
-# Trust building demonstration
-# Run this program multiple times to see trust score increase
-# Eventually it should transition to optimized execution
-
 counter = 1
 doubled = counter * 2
 result = doubled + 5

@@ -1,0 +1,8 @@
+x = 10
+y = 5
+safe_result = x + y
+print safe_result
+
+divisor = 0
+unsafe_result = x / divisor
+print unsafe_result

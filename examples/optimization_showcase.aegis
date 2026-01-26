@@ -1,0 +1,23 @@
+base = 7
+multiplier = 3
+offset = 12
+
+step1 = base * multiplier
+step2 = step1 + offset
+step3 = step2 * base
+step4 = step3 - multiplier
+step5 = step4 + offset
+
+print step1
+print step2
+print step3
+print step4
+print step5
+
+result = step1 + step2 * step3 - step4 + step5
+print result
+
+cached_calc1 = base * multiplier
+cached_calc2 = step1 + offset
+print cached_calc1
+print cached_calc2

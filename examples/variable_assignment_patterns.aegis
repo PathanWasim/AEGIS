@@ -1,0 +1,21 @@
+x = 42
+print x
+
+y = x + 10
+print y
+
+z = x + y
+print z
+
+x = z * 2
+print x
+
+a = 5
+b = a * 2
+c = b + a
+d = c - b
+e = d * a
+print e
+
+final_result = a + b + c + d + e
+print final_result
