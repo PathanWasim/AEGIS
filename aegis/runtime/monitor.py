@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Callable
 from datetime import datetime
 from ..interpreter.context import ExecutionContext
+from ..errors import SecurityError
 
 
 @dataclass
@@ -97,20 +98,42 @@ class ExecutionMetrics:
         }
 
 
-class SecurityViolation(Exception):
+class SecurityViolation(SecurityError):
     """
-    Exception raised for security violations detected during runtime.
+    Enhanced security violation exception with detailed context.
     
-    This exception includes detailed information about the violation
+    This exception includes comprehensive information about the violation
     for analysis and trust management decisions.
     """
     
-    def __init__(self, violation_type: str, message: str, context: ExecutionContext = None):
+    def __init__(self, violation_type: str, message: str, execution_context: ExecutionContext = None):
+        # Prepare variable state information
+        variable_state = None
+        trust_score = None
+        instruction_count = None
+        
+        if execution_context:
+            variable_state = dict(execution_context.variables) if execution_context.variables else {}
+            instruction_count = getattr(execution_context, 'instruction_count', None)
+        
+        # Create enhanced security error
+        super().__init__(
+            message=message,
+            violation_type=violation_type,
+            execution_context=execution_context,
+            trust_score=trust_score,
+            suggestions=[
+                f"Review {violation_type} violation in execution context",
+                "Check program logic for security compliance",
+                "Consider reducing program complexity"
+            ]
+        )
+        
+        # Keep original attributes for backward compatibility
         self.violation_type = violation_type
         self.message = message
-        self.context = context
+        self.context = execution_context
         self.timestamp = datetime.now()
-        super().__init__(f"Security violation ({violation_type}): {message}")
 
 
 class RuntimeMonitor:

@@ -9,10 +9,11 @@ monitoring, and rollback handling.
 import time
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
-from .lexer.lexer import Lexer, LexerError
-from .parser.parser import Parser, ParseError
-from .interpreter.static_analyzer import StaticAnalyzer, AnalysisError
-from .interpreter.interpreter import SandboxedInterpreter, InterpreterError
+from .lexer.lexer import Lexer
+from .parser.parser import Parser
+from .interpreter.static_analyzer import StaticAnalyzer
+from .interpreter.interpreter import SandboxedInterpreter
+from .errors import LexicalError, SyntaxError as AegisSyntaxError, SemanticError, RuntimeError as AegisRuntimeError
 from .interpreter.context import ExecutionContext, ExecutionMode
 from .runtime.monitor import RuntimeMonitor, SecurityViolation, ExecutionMetrics
 from .trust.trust_manager import TrustManager
@@ -264,13 +265,19 @@ class AegisExecutionPipeline:
                 rollback_events=rollback_events
             )
             
-        except (LexerError, ParseError, AnalysisError, InterpreterError) as e:
-            # Execution failed
+        except (LexicalError, AegisSyntaxError, SemanticError, AegisRuntimeError) as e:
+            # Execution failed - enhance error with source code context
             execution_time = time.time() - start_time
+            
+            # Add source code context to error if not already present
+            if hasattr(e, 'context') and e.context and not e.context.source_code:
+                e.context.source_code = source_code
+            
             error_message = str(e)
             
             if verbose:
-                print(f"[AEGIS] Execution failed: {error_message}")
+                print(f"[AEGIS] Execution failed:")
+                print(f"[ERROR] {error_message}")
             
             return ExecutionResult(
                 success=False,

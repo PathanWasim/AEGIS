@@ -13,19 +13,7 @@ from ..ast.nodes import (
 )
 from ..ast.visitor import ASTVisitor
 from .context import ExecutionContext, ExecutionMode
-
-
-class InterpreterError(Exception):
-    """
-    Exception raised for interpreter runtime errors.
-    
-    Includes context information for debugging and security analysis.
-    """
-    
-    def __init__(self, message: str, context: ExecutionContext = None):
-        self.message = message
-        self.context = context
-        super().__init__(f"Runtime error: {message}")
+from ..errors import RuntimeError as AegisRuntimeError
 
 
 class SandboxedInterpreter(ASTVisitor):
@@ -66,7 +54,7 @@ class SandboxedInterpreter(ASTVisitor):
             context: Execution context for variable storage
             
         Raises:
-            InterpreterError: If runtime errors occur
+            AegisRuntimeError: If runtime errors occur
         """
         # Reset operation counter for this execution
         self.operation_count = 0
@@ -97,7 +85,15 @@ class SandboxedInterpreter(ASTVisitor):
         # Get context from the call
         context = getattr(self, '_current_context', None)
         if context is None:
-            raise InterpreterError("No execution context available")
+            raise AegisRuntimeError(
+                "No execution context available", 
+                execution_context=context,
+                variable_state={},
+                suggestions=[
+                    "Ensure interpreter is properly initialized",
+                    "Check execution context setup"
+                ]
+            )
         
         self._check_operation_limit()
         
@@ -110,7 +106,16 @@ class SandboxedInterpreter(ASTVisitor):
         
         # Validate the result
         if not isinstance(value, int):
-            raise InterpreterError(f"Assignment value must be integer, got {type(value).__name__}")
+            raise AegisRuntimeError(
+                f"Assignment value must be integer, got {type(value).__name__}", 
+                execution_context=context, 
+                variable_state=dict(context.variables) if context else {},
+                suggestions=[
+                    "Ensure all expressions evaluate to integers",
+                    "Check arithmetic operations for type consistency",
+                    f"Convert {type(value).__name__} to integer if needed"
+                ]
+            )
         
         # Check for integer overflow
         self._check_integer_bounds(value)
@@ -133,7 +138,7 @@ class SandboxedInterpreter(ASTVisitor):
         """Execute binary arithmetic operations."""
         context = getattr(self, '_current_context', None)
         if context is None:
-            raise InterpreterError("No execution context available")
+            raise AegisRuntimeError("No execution context available", context)
         
         self._check_operation_limit()
         
@@ -143,7 +148,8 @@ class SandboxedInterpreter(ASTVisitor):
         
         # Validate operands
         if not isinstance(left_val, int) or not isinstance(right_val, int):
-            raise InterpreterError(f"Arithmetic operands must be integers")
+            raise AegisRuntimeError(f"Arithmetic operands must be integers", 
+                                   context, context.variables if context else None)
         
         # Perform operation with overflow protection
         try:
@@ -155,11 +161,21 @@ class SandboxedInterpreter(ASTVisitor):
                 result = left_val * right_val
             elif node.operator == '/':
                 if right_val == 0:
-                    raise InterpreterError("Division by zero")
+                    raise AegisRuntimeError(
+                        "Division by zero", 
+                        execution_context=context, 
+                        variable_state=dict(context.variables) if context else {},
+                        suggestions=[
+                            "Ensure divisor is not zero before division",
+                            "Add conditional checks for zero values",
+                            f"Current divisor value: {right_val}"
+                        ]
+                    )
                 # Integer division
                 result = left_val // right_val
             else:
-                raise InterpreterError(f"Unknown operator: {node.operator}")
+                raise AegisRuntimeError(f"Unknown operator: {node.operator}", context,
+                                       context.variables if context else None)
             
             # Check for overflow
             self._check_integer_bounds(result)
@@ -173,13 +189,14 @@ class SandboxedInterpreter(ASTVisitor):
             return result
             
         except OverflowError:
-            raise InterpreterError("Integer overflow in arithmetic operation")
+            raise AegisRuntimeError("Integer overflow in arithmetic operation", context,
+                                   context.variables if context else None)
     
     def visit_identifier(self, node: IdentifierNode) -> int:
         """Execute identifier references (variable lookup)."""
         context = getattr(self, '_current_context', None)
         if context is None:
-            raise InterpreterError("No execution context available")
+            raise AegisRuntimeError("No execution context available", context)
         
         self._check_operation_limit()
         
@@ -190,7 +207,17 @@ class SandboxedInterpreter(ASTVisitor):
         try:
             return context.get_variable(node.name)
         except KeyError:
-            raise InterpreterError(f"Undefined variable: {node.name}")
+            available_vars = list(context.variables.keys()) if context and context.variables else []
+            raise AegisRuntimeError(
+                f"Undefined variable: {node.name}", 
+                execution_context=context,
+                variable_state=dict(context.variables) if context else {},
+                suggestions=[
+                    f"Define variable '{node.name}' before using it",
+                    "Check for typos in variable names",
+                    f"Available variables: {available_vars}" if available_vars else "No variables defined yet"
+                ]
+            )
     
     def visit_integer(self, node: IntegerNode) -> int:
         """Execute integer literals."""
@@ -209,7 +236,7 @@ class SandboxedInterpreter(ASTVisitor):
         """Execute print statements."""
         context = getattr(self, '_current_context', None)
         if context is None:
-            raise InterpreterError("No execution context available")
+            raise AegisRuntimeError("No execution context available", context)
         
         self._check_operation_limit()
         
@@ -232,7 +259,17 @@ class SandboxedInterpreter(ASTVisitor):
             print(value)
             
         except KeyError:
-            raise InterpreterError(f"Cannot print undefined variable: {node.identifier}")
+            available_vars = list(context.variables.keys()) if context and context.variables else []
+            raise AegisRuntimeError(
+                f"Cannot print undefined variable: {node.identifier}", 
+                execution_context=context, 
+                variable_state=dict(context.variables) if context else {},
+                suggestions=[
+                    f"Define variable '{node.identifier}' before printing it",
+                    "Check for typos in variable names",
+                    f"Available variables: {available_vars}" if available_vars else "No variables defined yet"
+                ]
+            )
         
         return None
     
@@ -241,11 +278,21 @@ class SandboxedInterpreter(ASTVisitor):
         Check if operation limit has been exceeded.
         
         Raises:
-            InterpreterError: If too many operations have been performed
+            AegisRuntimeError: If too many operations have been performed
         """
         self.operation_count += 1
         if self.operation_count > self.max_operations:
-            raise InterpreterError(f"Operation limit exceeded ({self.max_operations})")
+            context = getattr(self, '_current_context', None)
+            raise AegisRuntimeError(
+                f"Operation limit exceeded ({self.max_operations})", 
+                execution_context=context, 
+                variable_state=dict(context.variables) if context else {},
+                suggestions=[
+                    f"Reduce program complexity (current: {self.operation_count} operations)",
+                    f"Increase operation limit (current: {self.max_operations})",
+                    "Optimize program logic to use fewer operations"
+                ]
+            )
     
     def _check_integer_bounds(self, value: int) -> None:
         """
@@ -255,10 +302,12 @@ class SandboxedInterpreter(ASTVisitor):
             value: Integer value to check
             
         Raises:
-            InterpreterError: If value is out of bounds
+            AegisRuntimeError: If value is out of bounds
         """
         if value < self.min_integer or value > self.max_integer:
-            raise InterpreterError(f"Integer overflow: {value} is out of bounds")
+            context = getattr(self, '_current_context', None)
+            raise AegisRuntimeError(f"Integer overflow: {value} is out of bounds", 
+                                   context, context.variables if context else None)
     
     def get_operation_count(self) -> int:
         """

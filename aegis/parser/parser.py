@@ -21,19 +21,7 @@ from ..ast.nodes import (
     ASTNode, AssignmentNode, BinaryOpNode, IdentifierNode,
     IntegerNode, PrintNode, ExpressionNode
 )
-
-
-class ParseError(Exception):
-    """
-    Exception raised for parsing errors.
-    
-    Includes position information for precise error reporting.
-    """
-    
-    def __init__(self, message: str, token: Token):
-        self.message = message
-        self.token = token
-        super().__init__(f"Parse error at line {token.line}, column {token.column}: {message}")
+from ..errors import SyntaxError as AegisSyntaxError
 
 
 class Parser:
@@ -112,7 +100,9 @@ class Parser:
         
         # Unexpected token
         current_token = self._peek()
-        raise ParseError(f"Unexpected token: {current_token.value}", current_token)
+        raise AegisSyntaxError(f"Unexpected token: {current_token.value}", 
+                              current_token.line, current_token.column, 
+                              current_token.value, expected="statement")
     
     def _parse_assignment(self) -> AssignmentNode:
         """
@@ -218,7 +208,9 @@ class Parser:
         
         # If we get here, we have an unexpected token
         current_token = self._peek()
-        raise ParseError(f"Expected expression, got: {current_token.value}", current_token)
+        raise AegisSyntaxError(f"Expected expression, got: {current_token.value}", 
+                              current_token.line, current_token.column, 
+                              current_token.value, "expression")
     
     def _match(self, *token_types: TokenType) -> bool:
         """
@@ -306,4 +298,6 @@ class Parser:
             return self._advance()
         
         current_token = self._peek()
-        raise ParseError(f"{message}, got: {current_token.value}", current_token)
+        raise AegisSyntaxError(f"{message}, got: {current_token.value}", 
+                              current_token.line, current_token.column, 
+                              current_token.value, expected=token_type.name.lower())

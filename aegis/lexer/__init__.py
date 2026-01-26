@@ -3,6 +3,10 @@ Lexer module for AEGIS - Converts source code into tokens.
 """
 
 from .tokens import Token, TokenType
-from .lexer import Lexer, LexerError
+from .lexer import Lexer
+from ..errors import LexicalError
 
-__all__ = ['Token', 'TokenType', 'Lexer', 'LexerError']
+# Alias for backward compatibility
+LexerError = LexicalError
+
+__all__ = ['Token', 'TokenType', 'Lexer', 'LexerError', 'LexicalError']

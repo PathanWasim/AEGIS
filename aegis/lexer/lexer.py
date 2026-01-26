@@ -7,20 +7,7 @@ converting source code text into a stream of tokens for parsing.
 
 from typing import List, Optional
 from .tokens import Token, TokenType
-
-
-class LexerError(Exception):
-    """
-    Exception raised for lexical analysis errors.
-    
-    Includes position information for precise error reporting.
-    """
-    
-    def __init__(self, message: str, line: int, column: int):
-        self.message = message
-        self.line = line
-        self.column = column
-        super().__init__(f"Lexer error at line {line}, column {column}: {message}")
+from ..errors import LexicalError
 
 
 class Lexer:
@@ -118,7 +105,7 @@ class Lexer:
         
         # Invalid character
         else:
-            raise LexerError(f"Unexpected character: '{char}'", self.line, self.column - 1)
+            raise LexicalError(f"Unexpected character: '{char}'", self.line, self.column - 1, char)
     
     def _scan_number(self) -> None:
         """

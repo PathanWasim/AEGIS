@@ -12,19 +12,7 @@ from ..ast.nodes import (
     IntegerNode, PrintNode
 )
 from ..ast.visitor import ASTVisitor
-
-
-class AnalysisError(Exception):
-    """
-    Exception raised for static analysis violations.
-    
-    Includes detailed information about the security issue detected.
-    """
-    
-    def __init__(self, message: str, node: ASTNode = None):
-        self.message = message
-        self.node = node
-        super().__init__(f"Static analysis error: {message}")
+from ..errors import SemanticError
 
 
 class StaticAnalyzer(ASTVisitor):
@@ -73,19 +61,25 @@ class StaticAnalyzer(ASTVisitor):
         for node in ast:
             try:
                 node.accept(self)
+            except SemanticError:
+                # Re-raise semantic errors immediately
+                raise
             except Exception as e:
+                # For other exceptions, add to error list
                 self.errors.append(f"Analysis failed for node {type(node).__name__}: {str(e)}")
         
-        # Check for undefined variables (this is now handled in visit_identifier)
-        # undefined_vars = self.used_variables - self.defined_variables
-        # if undefined_vars:
-        #     for var in sorted(undefined_vars):
-        #         self.errors.append(f"Undefined variable: {var}")
-        
-        # If there are errors, raise exception
+        # Check for any remaining errors (non-semantic ones)
         if self.errors:
-            error_msg = "; ".join(self.errors)
-            raise AnalysisError(error_msg)
+            # Multiple errors - create a combined error
+            error_msg = f"Analysis errors found:\n" + "\n".join(f"  - {error}" for error in self.errors)
+            raise SemanticError(
+                error_msg,
+                suggestions=[
+                    "Fix each error individually",
+                    "Check program structure and syntax",
+                    "Review analysis error details"
+                ]
+            )
         
         return True
     
@@ -147,7 +141,15 @@ class StaticAnalyzer(ASTVisitor):
             # Check for potential division by zero
             if node.operator == '/':
                 if isinstance(node.right, IntegerNode) and node.right.value == 0:
-                    self.errors.append("Division by zero detected")
+                    raise SemanticError(
+                        "Division by zero detected",
+                        line=getattr(node, 'line', None),
+                        suggestions=[
+                            "Ensure divisor is not zero",
+                            "Add conditional checks before division",
+                            "Use non-zero values for division"
+                        ]
+                    )
                 elif isinstance(node.right, IdentifierNode):
                     self.warnings.append(f"Potential division by zero with variable '{node.right.name}'")
             
@@ -178,14 +180,32 @@ class StaticAnalyzer(ASTVisitor):
         """
         # Check if variable is defined at this point
         if node.name not in self.defined_variables:
-            self.errors.append(f"Undefined variable: {node.name}")
+            # Create enhanced error with context and raise immediately
+            raise SemanticError(
+                f"Undefined variable: {node.name}",
+                variable=node.name,
+                line=getattr(node, 'line', None),
+                suggestions=[
+                    f"Define variable '{node.name}' before using it",
+                    "Check for typos in variable names",
+                    "Ensure variable assignments come before usage"
+                ]
+            )
         
         # Mark variable as used
         self.used_variables.add(node.name)
         
         # Check for valid identifier format (basic check)
         if not self._is_valid_identifier(node.name):
-            self.errors.append(f"Invalid identifier format: {node.name}")
+            raise SemanticError(
+                f"Invalid identifier format: {node.name}",
+                variable=node.name,
+                line=getattr(node, 'line', None),
+                suggestions=[
+                    "Use only letters, digits, and underscores in variable names",
+                    "Start variable names with a letter or underscore"
+                ]
+            )
         
         return None
     
