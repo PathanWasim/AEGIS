@@ -62,24 +62,80 @@ class StaticAnalyzer(ASTVisitor):
             try:
                 node.accept(self)
             except SemanticError:
-                # Re-raise semantic errors immediately
+                # Re-raise semantic errors immediately (for division by zero, etc.)
                 raise
             except Exception as e:
                 # For other exceptions, add to error list
                 self.errors.append(f"Analysis failed for node {type(node).__name__}: {str(e)}")
         
-        # Check for any remaining errors (non-semantic ones)
+        # Check for any collected errors
         if self.errors:
-            # Multiple errors - create a combined error
-            error_msg = f"Analysis errors found:\n" + "\n".join(f"  - {error}" for error in self.errors)
-            raise SemanticError(
-                error_msg,
-                suggestions=[
-                    "Fix each error individually",
-                    "Check program structure and syntax",
-                    "Review analysis error details"
-                ]
-            )
+            # Group different types of errors
+            undefined_vars = []
+            division_errors = []
+            other_errors = []
+            
+            for error in self.errors:
+                if error.startswith("Undefined variable:"):
+                    var_name = error.split(": ")[1]
+                    undefined_vars.append(var_name)
+                elif "division by zero" in error.lower():
+                    division_errors.append(error)
+                else:
+                    other_errors.append(error)
+            
+            # Determine which error to raise (prioritize division by zero as it's critical)
+            if division_errors:
+                # Division by zero is critical - raise it, but all errors are already collected in self.errors
+                raise SemanticError(
+                    "Division by zero detected",
+                    suggestions=[
+                        "Ensure divisor is not zero",
+                        "Add conditional checks before division",
+                        "Use non-zero values for division"
+                    ]
+                )
+            elif undefined_vars:
+                if len(undefined_vars) == 1:
+                    # Single undefined variable - create detailed error
+                    var_name = undefined_vars[0]
+                    raise SemanticError(
+                        f"Undefined variable: {var_name}",
+                        variable=var_name,
+                        suggestions=[
+                            f"Define variable '{var_name}' before using it",
+                            "Check for typos in variable names",
+                            "Ensure variable assignments come before usage"
+                        ]
+                    )
+                else:
+                    # Multiple undefined variables - create combined error
+                    var_list = ", ".join(undefined_vars)
+                    error_msg = f"Multiple undefined variables: {var_list}"
+                    for var in undefined_vars:
+                        error_msg += f"\nUndefined variable: {var}"
+                    
+                    raise SemanticError(
+                        error_msg,
+                        suggestions=[
+                            "Define all variables before using them",
+                            "Check for typos in variable names",
+                            "Ensure variable assignments come before usage",
+                            f"Variables that need to be defined: {var_list}"
+                        ]
+                    )
+            
+            # Handle other errors
+            if other_errors:
+                error_msg = f"Analysis errors found:\n" + "\n".join(f"  - {error}" for error in other_errors)
+                raise SemanticError(
+                    error_msg,
+                    suggestions=[
+                        "Fix each error individually",
+                        "Check program structure and syntax",
+                        "Review analysis error details"
+                    ]
+                )
         
         return True
     
@@ -141,15 +197,8 @@ class StaticAnalyzer(ASTVisitor):
             # Check for potential division by zero
             if node.operator == '/':
                 if isinstance(node.right, IntegerNode) and node.right.value == 0:
-                    raise SemanticError(
-                        "Division by zero detected",
-                        line=getattr(node, 'line', None),
-                        suggestions=[
-                            "Ensure divisor is not zero",
-                            "Add conditional checks before division",
-                            "Use non-zero values for division"
-                        ]
-                    )
+                    # Add to errors list instead of raising immediately
+                    self.errors.append("Division by zero detected")
                 elif isinstance(node.right, IdentifierNode):
                     self.warnings.append(f"Potential division by zero with variable '{node.right.name}'")
             
@@ -178,34 +227,18 @@ class StaticAnalyzer(ASTVisitor):
         - Variable name validity
         - Checks if variable is defined at this point
         """
+        # Mark variable as used first
+        self.used_variables.add(node.name)
+        
         # Check if variable is defined at this point
         if node.name not in self.defined_variables:
-            # Create enhanced error with context and raise immediately
-            raise SemanticError(
-                f"Undefined variable: {node.name}",
-                variable=node.name,
-                line=getattr(node, 'line', None),
-                suggestions=[
-                    f"Define variable '{node.name}' before using it",
-                    "Check for typos in variable names",
-                    "Ensure variable assignments come before usage"
-                ]
-            )
-        
-        # Mark variable as used
-        self.used_variables.add(node.name)
+            # Add to errors list instead of raising immediately
+            # This allows collecting multiple undefined variables
+            self.errors.append(f"Undefined variable: {node.name}")
         
         # Check for valid identifier format (basic check)
         if not self._is_valid_identifier(node.name):
-            raise SemanticError(
-                f"Invalid identifier format: {node.name}",
-                variable=node.name,
-                line=getattr(node, 'line', None),
-                suggestions=[
-                    "Use only letters, digits, and underscores in variable names",
-                    "Start variable names with a letter or underscore"
-                ]
-            )
+            self.errors.append(f"Invalid identifier format: {node.name}")
         
         return None
     
