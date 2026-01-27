@@ -1,0 +1,28 @@
+{
+  "trust_scores": {
+    "b14dbeed8a866964": {
+      "code_hash": "b14dbeed8a866964",
+      "current_score": 0.14,
+      "execution_count": 1,
+      "successful_executions": 1,
+      "violation_count": 0,
+      "last_execution": "2026-01-27T18:20:06.740337",
+      "last_violation": null,
+      "first_execution": "2026-01-27T18:20:06.740337",
+      "trust_history": [
+        {
+          "timestamp": "2026-01-27T18:20:06.740337",
+          "score_before": 0.14,
+          "score_after": 0.14,
+          "execution_count": 1,
+          "had_violations": [],
+          "instruction_count": 5,
+          "execution_time": 0.0
+        }
+      ]
+    }
+  },
+  "trust_threshold": 1.0,
+  "optimization_enabled": true,
+  "last_updated": "2026-01-27T18:20:06.741335"
+}

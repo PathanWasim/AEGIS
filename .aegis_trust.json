@@ -195,11 +195,11 @@
     },
     "fca224a860a11ca4": {
       "code_hash": "fca224a860a11ca4",
-      "current_score": 2.03,
-      "execution_count": 12,
-      "successful_executions": 12,
+      "current_score": 3.5499999999999994,
+      "execution_count": 20,
+      "successful_executions": 20,
       "violation_count": 0,
-      "last_execution": "2026-01-27T18:06:45.005445",
+      "last_execution": "2026-01-27T18:36:34.208939",
       "last_violation": null,
       "first_execution": "2026-01-27T18:06:43.316049",
       "trust_history": [
@@ -327,10 +327,140 @@
         {
           "timestamp": "2026-01-27T18:06:45.005445",
           "score_before": 2.03,
-          "score_after": 2.03,
+          "score_after": 2.2199999999999998,
           "execution_count": 12,
           "had_violations": [],
           "instruction_count": 4,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-27T18:36:33.314048",
+          "score_before": 2.2199999999999998,
+          "score_after": 2.4099999999999997,
+          "execution_count": 13,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.0003923154344745711,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-27T18:36:33.460343",
+          "score_before": 2.4099999999999997,
+          "score_after": 2.5999999999999996,
+          "execution_count": 14,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-27T18:36:33.591317",
+          "score_before": 2.5999999999999996,
+          "score_after": 2.7899999999999996,
+          "execution_count": 15,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-27T18:36:33.720184",
+          "score_before": 2.7899999999999996,
+          "score_after": 2.9799999999999995,
+          "execution_count": 16,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-27T18:36:33.839902",
+          "score_before": 2.9799999999999995,
+          "score_after": 3.1699999999999995,
+          "execution_count": 17,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-27T18:36:33.960624",
+          "score_before": 3.1699999999999995,
+          "score_after": 3.3599999999999994,
+          "execution_count": 18,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-27T18:36:34.078704",
+          "score_before": 3.3599999999999994,
+          "score_after": 3.5499999999999994,
+          "execution_count": 19,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.0,
+          "increment": 0.18999999999999995,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-01-27T18:36:34.208939",
+          "score_before": 3.5499999999999994,
+          "score_after": 3.5499999999999994,
+          "execution_count": 20,
+          "had_violations": [],
+          "instruction_count": 4,
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "852b8a77adf76ebc": {
+      "code_hash": "852b8a77adf76ebc",
+      "current_score": 0.14,
+      "execution_count": 1,
+      "successful_executions": 1,
+      "violation_count": 0,
+      "last_execution": "2026-01-27T18:36:20.980145",
+      "last_violation": null,
+      "first_execution": "2026-01-27T18:36:20.980145",
+      "trust_history": [
+        {
+          "timestamp": "2026-01-27T18:36:20.980145",
+          "score_before": 0.14,
+          "score_after": 0.14,
+          "execution_count": 1,
+          "had_violations": [],
+          "instruction_count": 65,
+          "execution_time": 0.0
+        }
+      ]
+    },
+    "91af8efcd86196bc": {
+      "code_hash": "91af8efcd86196bc",
+      "current_score": 0.14,
+      "execution_count": 1,
+      "successful_executions": 1,
+      "violation_count": 0,
+      "last_execution": "2026-01-27T18:55:51.721020",
+      "last_violation": null,
+      "first_execution": "2026-01-27T18:55:51.721020",
+      "trust_history": [
+        {
+          "timestamp": "2026-01-27T18:55:51.721020",
+          "score_before": 0.14,
+          "score_after": 0.14,
+          "execution_count": 1,
+          "had_violations": [],
+          "instruction_count": 12,
           "execution_time": 0.0
         }
       ]
@@ -338,5 +468,5 @@
   },
   "trust_threshold": 1.0,
   "optimization_enabled": true,
-  "last_updated": "2026-01-27T18:06:45.006446"
+  "last_updated": "2026-01-27T18:55:51.723019"
 }

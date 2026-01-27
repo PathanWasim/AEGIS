@@ -1,0 +1,21 @@
+x = 10
+y = 20
+sum = x + y
+product = x * y
+difference = x - y
+quotient = x / 2
+
+print sum
+print product
+print difference
+print quotient
+
+a = 5
+b = 3
+c = 2
+complex_result = a + b * c - 1
+
+print complex_result
+
+final_calc = sum + product - difference
+print final_calc
