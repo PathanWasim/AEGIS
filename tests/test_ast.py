@@ -51,9 +51,10 @@ class TestASTNodes:
     
     def test_print_node_creation(self):
         """Test creating print nodes."""
-        node = PrintNode("result")
-        assert node.identifier == "result"
-        assert len(node.get_children()) == 0
+        expr = IdentifierNode("result")
+        node = PrintNode(expr)
+        assert node.expression == expr
+        assert len(node.get_children()) == 1
 
 
 class TestASTPrettyPrinter:
@@ -94,7 +95,7 @@ class TestASTPrettyPrinter:
     
     def test_print_statement_printing(self):
         """Test printing print statements."""
-        node = PrintNode("result")
+        node = PrintNode(IdentifierNode("result"))
         result = self.printer.print_ast(node)
         assert result == "print result"
     
@@ -157,7 +158,7 @@ class TestASTPrettyPrinter:
         statements = [
             AssignmentNode("x", IntegerNode(10)),
             AssignmentNode("y", BinaryOpNode(IdentifierNode("x"), "+", IntegerNode(5))),
-            PrintNode("y")
+            PrintNode(IdentifierNode("y"))
         ]
         
         result = self.printer.print_program(statements)
@@ -212,8 +213,7 @@ class TestASTVisitorPattern:
     def test_visitor_pattern_print(self):
         """Test visitor pattern with print nodes."""
         printer = ASTPrettyPrinter()
-        node = PrintNode("output")
-        
+        node = PrintNode(IdentifierNode("output"))
         result = node.accept(printer)
         assert result == "print output"
 
@@ -228,7 +228,7 @@ class TestASTNodeHierarchy:
             IdentifierNode("x"),
             BinaryOpNode(IntegerNode(1), "+", IntegerNode(2)),
             AssignmentNode("x", IntegerNode(1)),
-            PrintNode("x")
+            PrintNode(IdentifierNode("x"))
         ]
         
         for node in nodes:

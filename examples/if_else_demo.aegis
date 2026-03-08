@@ -1,0 +1,33 @@
+# AEGIS Example: if/else Control Flow Demo
+# Demonstrates conditional execution with comparison operators
+
+x = 15
+y = 10
+
+# Compare two values
+if x > y
+  print x
+else
+  print y
+end
+
+# Check even/odd using modulo
+number = 42
+remainder = number % 2
+
+if remainder == 0
+  print number
+end
+
+# Nested condition using arithmetic in the condition
+a = 5
+b = 3
+sum = a + b
+
+if sum > 7
+  result = sum * 2
+  print result
+else
+  result = sum
+  print result
+end

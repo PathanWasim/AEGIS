@@ -1,0 +1,44 @@
+# AEGIS Example: Complete Language Showcase
+# Demonstrates ALL language features together
+
+# --- 1. Arithmetic ---
+x = 10
+y = 3
+sum_val = x + y
+diff = x - y
+product = x * y
+quotient = x / y
+remainder = x % y
+
+print sum_val
+print diff
+print product
+print quotient
+print remainder
+
+# --- 2. Comparison & if/else ---
+if x > y
+  bigger = x
+else
+  bigger = y
+end
+print bigger
+
+# --- 3. While loop with accumulation ---
+total = 0
+i = 1
+while i <= 5
+  total = total + i
+  i = i + 1
+end
+print total
+
+# --- 4. Nested if inside loop ---
+j = 1
+while j <= 10
+  rem = j % 2
+  if rem == 0
+    print j
+  end
+  j = j + 1
+end

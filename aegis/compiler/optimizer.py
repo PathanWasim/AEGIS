@@ -8,7 +8,7 @@ trust, simulating compilation optimizations while maintaining security monitorin
 import time
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
-from ..ast.nodes import ASTNode, AssignmentNode, BinaryOpNode, IdentifierNode, IntegerNode, PrintNode
+from ..ast.nodes import ASTNode, AssignmentNode, BinaryOpNode, IdentifierNode, IntegerNode, PrintNode, IfNode, WhileNode
 from ..ast.visitor import ASTVisitor
 from ..interpreter.context import ExecutionContext
 from ..runtime.monitor import RuntimeMonitor, ExecutionMetrics
@@ -120,11 +120,17 @@ class ASTOptimizer(ASTVisitor):
             self._collect_usage_from_node(node.left)
             self._collect_usage_from_node(node.right)
         elif isinstance(node, PrintNode):
-            # PrintNode has identifier attribute, not expression
-            if hasattr(node, 'identifier') and isinstance(node.identifier, str):
-                self.used_variables.add(node.identifier)
-            elif hasattr(node, 'expression'):
-                self._collect_usage_from_node(node.expression)
+            self._collect_usage_from_node(node.expression)
+        elif isinstance(node, IfNode):
+            self._collect_usage_from_node(node.condition)
+            for s in node.then_body:
+                self._collect_usage_from_node(s)
+            for s in node.else_body:
+                self._collect_usage_from_node(s)
+        elif isinstance(node, WhileNode):
+            self._collect_usage_from_node(node.condition)
+            for s in node.body:
+                self._collect_usage_from_node(s)
     
     def visit_assignment(self, node: AssignmentNode) -> Optional[ASTNode]:
         """Optimize assignment nodes."""
@@ -196,20 +202,22 @@ class ASTOptimizer(ASTVisitor):
         return node
     
     def visit_print(self, node: PrintNode) -> ASTNode:
-        """Optimize print statements."""
-        # Handle both old and new PrintNode formats
-        if hasattr(node, 'expression'):
-            optimized_expr = self.visit(node.expression)
-            return PrintNode(optimized_expr)
-        else:
-            # PrintNode with identifier string - check if it's a constant
-            if hasattr(node, 'identifier') and isinstance(node.identifier, str):
-                if node.identifier in self.constants:
-                    self.optimization_flags['variable_propagation'] = True
-                    # Create a new PrintNode with the constant value
-                    # For now, keep the original format since changing structure is complex
-                    return node
-            return node
+        """Optimize print statements — expression form."""
+        optimized_expr = self.visit(node.expression)
+        return PrintNode(optimized_expr)
+
+    def visit_if(self, node: IfNode) -> ASTNode:
+        """Optimize if/else/end — recursively optimise bodies."""
+        optimized_cond = self.visit(node.condition)
+        optimized_then = [self.visit(s) for s in node.then_body if s is not None]
+        optimized_else = [self.visit(s) for s in node.else_body if s is not None]
+        return IfNode(optimized_cond, optimized_then, optimized_else)
+
+    def visit_while(self, node: WhileNode) -> ASTNode:
+        """Optimize while/end — recursively optimise body."""
+        optimized_cond = self.visit(node.condition)
+        optimized_body = [self.visit(s) for s in node.body if s is not None]
+        return WhileNode(optimized_cond, optimized_body)
     
     def _simplify_expression(self, left: ASTNode, operator: str, right: ASTNode) -> ASTNode:
         """Apply algebraic simplifications."""

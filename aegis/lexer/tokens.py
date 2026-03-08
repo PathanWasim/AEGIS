@@ -17,20 +17,45 @@ class TokenType(Enum):
     The AEGIS language supports:
     - Variable identifiers
     - Integer literals
+    - String literals
     - Assignment operator (=)
     - Arithmetic operators (+, -, *, /)
+    - Comparison operators (==, !=, <, <=, >, >=)
+    - Parentheses ((, ))
+    - Control flow keywords (IF, ELSE, WHILE, END)
     - Print keyword
     - End of file marker
     - Newline for statement separation
     """
     IDENTIFIER = auto()
     INTEGER = auto()
+    STRING = auto() # Added string literal type
+
+    # Operators
     ASSIGN = auto()
     PLUS = auto()
     MINUS = auto()
     MULTIPLY = auto()
     DIVIDE = auto()
+    EQ = auto()     # ==
+    NEQ = auto()    # !=
+    LT = auto()     # <
+    LTE = auto()    # <=
+    GT = auto()     # >
+    GTE = auto()    # >=
+
+    # Delimiters
+    LPAREN = auto() # (
+    RPAREN = auto() # )
+
+    # Keywords
+    IF = auto()
+    ELSE = auto()
+    WHILE = auto()
+    END = auto()
     PRINT = auto()
+
+    # Special
     EOF = auto()
     NEWLINE = auto()
 

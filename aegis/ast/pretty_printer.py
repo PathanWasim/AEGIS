@@ -9,8 +9,8 @@ crucial for round-trip testing and debugging.
 from typing import List
 from .visitor import ASTVisitor
 from .nodes import (
-    AssignmentNode, BinaryOpNode, IdentifierNode, 
-    IntegerNode, PrintNode, ASTNode
+    AssignmentNode, BinaryOpNode, IdentifierNode,
+    IntegerNode, PrintNode, IfNode, WhileNode, ASTNode
 )
 
 
@@ -97,7 +97,35 @@ class ASTPrettyPrinter(ASTVisitor):
     
     def visit_print(self, node: PrintNode) -> str:
         """Visit a print node and generate print statement."""
-        return f"print {node.identifier}"
+        return f"print {node.expression.accept(self)}"
+
+    def visit_if(self, node: IfNode) -> str:
+        """Visit an if/else node and generate if/else/end block."""
+        cond_str = node.condition.accept(self)
+        lines = [f"if {cond_str}"]
+        self._increase_indent()
+        for stmt in node.then_body:
+            lines.append(f"{self._get_indent()}{stmt.accept(self)}")
+        self._decrease_indent()
+        if node.else_body:
+            lines.append("else")
+            self._increase_indent()
+            for stmt in node.else_body:
+                lines.append(f"{self._get_indent()}{stmt.accept(self)}")
+            self._decrease_indent()
+        lines.append("end")
+        return "\n".join(lines)
+
+    def visit_while(self, node: 'WhileNode') -> str:
+        """Visit a while node and generate while/end block."""
+        cond_str = node.condition.accept(self)
+        lines = [f"while {cond_str}"]
+        self._increase_indent()
+        for stmt in node.body:
+            lines.append(f"{self._get_indent()}{stmt.accept(self)}")
+        self._decrease_indent()
+        lines.append("end")
+        return "\n".join(lines)
     
     def _needs_parentheses(self, inner_op: str, outer_op: str, is_left: bool) -> bool:
         """

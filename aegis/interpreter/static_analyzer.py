@@ -9,7 +9,7 @@ prevents unsafe code from running.
 from typing import List, Set, Dict, Any
 from ..ast.nodes import (
     ASTNode, AssignmentNode, BinaryOpNode, IdentifierNode,
-    IntegerNode, PrintNode
+    IntegerNode, PrintNode, IfNode, WhileNode
 )
 from ..ast.visitor import ASTVisitor
 from ..errors import SemanticError
@@ -259,22 +259,61 @@ class StaticAnalyzer(ASTVisitor):
     def visit_print(self, node: PrintNode) -> Any:
         """
         Analyze print statements.
-        
-        Checks:
-        - Variable existence (checked immediately)
-        - Print statement validity
+
+        print now accepts any expression, so we simply analyse the child
+        expression (which handles undefined variable checks recursively).
         """
-        # Check if variable is defined at this point
-        if node.identifier not in self.defined_variables:
-            self.errors.append(f"Undefined variable: {node.identifier}")
-        
-        # Mark the printed variable as used
-        self.used_variables.add(node.identifier)
-        
-        # Check for valid identifier format
-        if not self._is_valid_identifier(node.identifier):
-            self.errors.append(f"Invalid identifier in print statement: {node.identifier}")
-        
+        node.expression.accept(self)
+        return None
+
+    def visit_if(self, node: IfNode) -> Any:
+        """
+        Analyse if/else/end blocks.
+
+        Variables are tracked conservatively:
+        - Only variables defined in BOTH branches are guaranteed after the if.
+        - Variables defined in a single branch are NOT added to defined set.
+        """
+        # Analyse the condition expression
+        node.condition.accept(self)
+
+        # Snapshot before entering branches
+        before = set(self.defined_variables)
+
+        # Analyse then-branch
+        for stmt in node.then_body:
+            stmt.accept(self)
+        after_then = set(self.defined_variables)
+
+        # Reset and analyse else-branch
+        self.defined_variables = set(before)
+        for stmt in node.else_body:
+            stmt.accept(self)
+        after_else = set(self.defined_variables)
+
+        # Only variables defined in BOTH branches are guaranteed
+        self.defined_variables = after_then & after_else
+        # Variables from before remain
+        self.defined_variables |= before
+        return None
+
+    def visit_while(self, node: WhileNode) -> Any:
+        """
+        Analyse while/end loops.
+
+        Variables defined exclusively inside the loop body are NOT added to the
+        outer scope (we cannot guarantee the loop executes at all).
+        """
+        # Analyse condition
+        node.condition.accept(self)
+
+        # Snapshot before entering loop body
+        before = set(self.defined_variables)
+        for stmt in node.body:
+            stmt.accept(self)
+
+        # Only restore variables that were already defined before the loop
+        self.defined_variables = set(before)
         return None
     
     def _is_valid_identifier(self, name: str) -> bool:
@@ -300,7 +339,7 @@ class StaticAnalyzer(ASTVisitor):
                 return False
         
         # Cannot be a keyword
-        if name in ['print']:
+        if name in ('print', 'if', 'else', 'end', 'while'):
             return False
         
         return True

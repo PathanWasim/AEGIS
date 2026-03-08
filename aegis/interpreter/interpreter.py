@@ -1,15 +1,23 @@
 """
 Sandboxed interpreter implementation for AEGIS.
 
-This module provides the default secure execution environment for AEGIS programs.
-The interpreter executes AST nodes in a completely sandboxed environment with
-safety guarantees and overflow protection.
+This module provides the secure execution environment for AEGIS programs.
+The interpreter executes AST nodes in a sandboxed environment with safety
+guarantees, overflow protection, and loop-iteration limits.
+
+New in this version:
+    - Supports if/else/end control flow  (IfNode)
+    - Supports while/end loops           (WhileNode)
+    - print prints any expression value  (not just identifiers)
+    - Comparison operators produce 1 (true) / 0 (false) integers
+    - Modulo operator support
+    - Unary minus via 0-x BinaryOpNode pattern
 """
 
 from typing import List, Any, Optional
 from ..ast.nodes import (
     ASTNode, AssignmentNode, BinaryOpNode, IdentifierNode,
-    IntegerNode, PrintNode
+    IntegerNode, PrintNode, IfNode, WhileNode
 )
 from ..ast.visitor import ASTVisitor
 from .context import ExecutionContext, ExecutionMode
@@ -19,309 +27,306 @@ from ..errors import RuntimeError as AegisRuntimeError
 class SandboxedInterpreter(ASTVisitor):
     """
     Sandboxed interpreter for AEGIS programs.
-    
-    This interpreter provides the default secure execution environment:
+
+    Security guarantees:
     - Complete memory isolation per execution
-    - Arithmetic overflow protection
+    - Integer overflow protection (32-bit range enforced)
     - No system call access
-    - Controlled variable scoping
-    - Safe error handling
-    - Integrated runtime monitoring
-    
-    The interpreter uses the visitor pattern to execute AST nodes
-    and maintains execution state in an ExecutionContext.
+    - Runtime operation counting (prevents infinite loops)
+    - Division-by-zero detection
+    - Integrated runtime monitoring hooks
     """
-    
+
+    MAX_INTEGER = 2_147_483_647
+    MIN_INTEGER = -2_147_483_648
+    MAX_OPERATIONS = 50_000      # ~50 k ops per execution
+    MAX_LOOP_ITERATIONS = 10_000 # per individual loop
+
     def __init__(self, runtime_monitor=None):
         """
-        Initialize the sandboxed interpreter.
-        
+        Initialise the sandboxed interpreter.
+
         Args:
-            runtime_monitor: Optional runtime monitor for tracking execution
+            runtime_monitor: Optional monitor for tracking execution events.
         """
-        self.max_integer = 2147483647
-        self.min_integer = -2147483648
-        self.max_operations = 10000  # Prevent infinite loops
         self.operation_count = 0
         self.runtime_monitor = runtime_monitor
-    
+
+    # ------------------------------------------------------------------
+    # Entry point
+    # ------------------------------------------------------------------
+
     def execute(self, ast: List[ASTNode], context: ExecutionContext) -> None:
         """
-        Execute AST nodes in the sandboxed environment.
-        
+        Execute a list of AST nodes (a complete program) in the sandboxed env.
+
         Args:
-            ast: List of AST nodes to execute
-            context: Execution context for variable storage
-            
-        Raises:
-            AegisRuntimeError: If runtime errors occur
+            ast:     List of top-level AST nodes.
+            context: Execution context holding variable state and output.
         """
-        # Reset operation counter for this execution
         self.operation_count = 0
-        
-        # Ensure we're in interpreted mode
         context.execution_mode = ExecutionMode.INTERPRETED
-        
-        # Store context for visitor methods
         self._current_context = context
-        
-        # Start monitoring if available
+
         if self.runtime_monitor:
             self.runtime_monitor.start_monitoring(context)
-        
+
         try:
-            # Execute each statement in order
-            for node in ast:
-                self._check_operation_limit()
-                node.accept(self)
+            self._exec_block(ast)
         finally:
-            # Stop monitoring and clean up context reference
             if self.runtime_monitor:
                 self.runtime_monitor.stop_monitoring()
             self._current_context = None
-    
-    def visit_assignment(self, node: AssignmentNode) -> Any:
-        """Execute assignment statements."""
-        # Get context from the call
-        context = getattr(self, '_current_context', None)
-        if context is None:
-            raise AegisRuntimeError(
-                "No execution context available", 
-                execution_context=context,
-                variable_state={},
-                suggestions=[
-                    "Ensure interpreter is properly initialized",
-                    "Check execution context setup"
-                ]
-            )
-        
+
+    # ------------------------------------------------------------------
+    # Internal block executor
+    # ------------------------------------------------------------------
+
+    def _exec_block(self, statements: List[ASTNode]) -> None:
+        """Execute a list of statements sequentially."""
+        for node in statements:
+            self._check_operation_limit()
+            node.accept(self)
+
+    # ------------------------------------------------------------------
+    # Visitor implementations – statements
+    # ------------------------------------------------------------------
+
+    def visit_assignment(self, node: AssignmentNode) -> None:
+        """Execute: identifier = expression"""
+        context = self._require_context()
         self._check_operation_limit()
-        
-        # Record monitoring event
+
         if self.runtime_monitor:
-            self.runtime_monitor.record_operation("assignment", f"{node.identifier} = <expression>")
-        
-        # Evaluate the expression
+            self.runtime_monitor.record_operation("assignment", node.identifier)
+
         value = node.expression.accept(self)
-        
-        # Validate the result
-        if not isinstance(value, int):
-            raise AegisRuntimeError(
-                f"Assignment value must be integer, got {type(value).__name__}", 
-                execution_context=context, 
-                variable_state=dict(context.variables) if context else {},
-                suggestions=[
-                    "Ensure all expressions evaluate to integers",
-                    "Check arithmetic operations for type consistency",
-                    f"Convert {type(value).__name__} to integer if needed"
-                ]
-            )
-        
-        # Check for integer overflow
+        self._assert_integer(value, "Assignment value")
         self._check_integer_bounds(value)
-        
-        # Store the variable
-        if isinstance(node.identifier, str):
-            identifier_name = node.identifier
-        else:
-            identifier_name = node.identifier.name
-            
-        context.set_variable(identifier_name, value)
-        
-        # Record variable access
+
+        identifier = node.identifier if isinstance(node.identifier, str) else node.identifier.name
+        context.set_variable(identifier, value)
+
         if self.runtime_monitor:
-            self.runtime_monitor.record_variable_access(identifier_name, "write")
-        
-        return None
-    
-    def visit_binary_op(self, node: BinaryOpNode) -> int:
-        """Execute binary arithmetic operations."""
-        context = getattr(self, '_current_context', None)
-        if context is None:
-            raise AegisRuntimeError("No execution context available", context)
-        
+            self.runtime_monitor.record_variable_access(identifier, "write")
+
+    def visit_print(self, node: PrintNode) -> None:
+        """Execute: print <expression>"""
+        context = self._require_context()
         self._check_operation_limit()
-        
-        # Evaluate operands
+
+        if self.runtime_monitor:
+            self.runtime_monitor.record_operation("print", "expression")
+
+        value = node.expression.accept(self)
+        context.add_output(str(value))
+        print(value)
+
+    def visit_if(self, node: IfNode) -> None:
+        """Execute: if condition ... [else ...] end"""
+        self._check_operation_limit()
+        condition_value = node.condition.accept(self)
+
+        if condition_value:   # non-zero → truthy
+            self._exec_block(node.then_body)
+        elif node.else_body:
+            self._exec_block(node.else_body)
+
+    def visit_while(self, node: WhileNode) -> None:
+        """Execute: while condition ... end"""
+        context = self._require_context()
+        iterations = 0
+
+        while True:
+            self._check_operation_limit()
+            condition_value = node.condition.accept(self)
+            if not condition_value:
+                break
+
+            iterations += 1
+            if iterations > self.MAX_LOOP_ITERATIONS:
+                raise AegisRuntimeError(
+                    f"Loop iteration limit exceeded ({self.MAX_LOOP_ITERATIONS})",
+                    execution_context=context,
+                    variable_state=dict(context.variables),
+                    suggestions=[
+                        "Check loop condition — it may never become false",
+                        f"Current iteration count: {iterations}",
+                        "Consider restructuring the loop to terminate sooner"
+                    ]
+                )
+
+            if self.runtime_monitor:
+                self.runtime_monitor.record_operation("loop_iteration", f"iter={iterations}")
+
+            self._exec_block(node.body)
+
+    # ------------------------------------------------------------------
+    # Visitor implementations – expressions
+    # ------------------------------------------------------------------
+
+    def visit_binary_op(self, node: BinaryOpNode) -> int:
+        """Execute arithmetic or comparison binary operation."""
+        context = self._require_context()
+        self._check_operation_limit()
+
         left_val = node.left.accept(self)
         right_val = node.right.accept(self)
-        
-        # Validate operands
-        if not isinstance(left_val, int) or not isinstance(right_val, int):
-            raise AegisRuntimeError(f"Arithmetic operands must be integers", 
-                                   context, context.variables if context else None)
-        
-        # Perform operation with overflow protection
-        try:
-            if node.operator == '+':
-                result = left_val + right_val
-            elif node.operator == '-':
-                result = left_val - right_val
-            elif node.operator == '*':
-                result = left_val * right_val
-            elif node.operator == '/':
-                if right_val == 0:
-                    raise AegisRuntimeError(
-                        "Division by zero", 
-                        execution_context=context, 
-                        variable_state=dict(context.variables) if context else {},
-                        suggestions=[
-                            "Ensure divisor is not zero before division",
-                            "Add conditional checks for zero values",
-                            f"Current divisor value: {right_val}"
-                        ]
-                    )
-                # Integer division
-                result = left_val // right_val
-            else:
-                raise AegisRuntimeError(f"Unknown operator: {node.operator}", context,
-                                       context.variables if context else None)
-            
-            # Check for overflow
-            self._check_integer_bounds(result)
-            
-            # Record monitoring event
-            if self.runtime_monitor:
-                self.runtime_monitor.record_arithmetic_operation(
-                    node.operator, left_val, right_val, result
+
+        self._assert_integer(left_val, "Left operand")
+        self._assert_integer(right_val, "Right operand")
+
+        op = node.operator
+
+        # ---- Arithmetic ----
+        if op == '+':
+            result = left_val + right_val
+        elif op == '-':
+            result = left_val - right_val
+        elif op == '*':
+            result = left_val * right_val
+        elif op == '/':
+            if right_val == 0:
+                raise AegisRuntimeError(
+                    "Division by zero",
+                    execution_context=context,
+                    variable_state=dict(context.variables),
+                    suggestions=[
+                        "Ensure divisor is not zero before division",
+                        "Add an if-check: if divisor == 0 ... end",
+                    ]
                 )
-            
-            return result
-            
-        except OverflowError:
-            raise AegisRuntimeError("Integer overflow in arithmetic operation", context,
-                                   context.variables if context else None)
-    
+            result = left_val // right_val  # integer division
+        elif op == '%':
+            if right_val == 0:
+                raise AegisRuntimeError(
+                    "Modulo by zero",
+                    execution_context=context,
+                    variable_state=dict(context.variables),
+                    suggestions=["Ensure modulo divisor is not zero"]
+                )
+            result = left_val % right_val
+
+        # ---- Comparison  (return 1/0 as AEGIS ints) ----
+        elif op == '>':
+            result = 1 if left_val > right_val else 0
+        elif op == '<':
+            result = 1 if left_val < right_val else 0
+        elif op == '>=':
+            result = 1 if left_val >= right_val else 0
+        elif op == '<=':
+            result = 1 if left_val <= right_val else 0
+        elif op == '==':
+            result = 1 if left_val == right_val else 0
+        elif op == '!=':
+            result = 1 if left_val != right_val else 0
+        else:
+            raise AegisRuntimeError(
+                f"Unknown operator: {op}",
+                execution_context=context,
+                variable_state=dict(context.variables)
+            )
+
+        if op in ('+', '-', '*', '/', '%'):
+            self._check_integer_bounds(result)
+
+        if self.runtime_monitor:
+            self.runtime_monitor.record_arithmetic_operation(op, left_val, right_val, result)
+
+        return result
+
     def visit_identifier(self, node: IdentifierNode) -> int:
-        """Execute identifier references (variable lookup)."""
-        context = getattr(self, '_current_context', None)
-        if context is None:
-            raise AegisRuntimeError("No execution context available", context)
-        
+        """Execute a variable lookup."""
+        context = self._require_context()
         self._check_operation_limit()
-        
-        # Record variable access
+
         if self.runtime_monitor:
             self.runtime_monitor.record_variable_access(node.name, "read")
-        
+
         try:
             return context.get_variable(node.name)
         except KeyError:
-            available_vars = list(context.variables.keys()) if context and context.variables else []
+            available = list(context.variables.keys())
             raise AegisRuntimeError(
-                f"Undefined variable: {node.name}", 
+                f"Undefined variable: {node.name}",
                 execution_context=context,
-                variable_state=dict(context.variables) if context else {},
+                variable_state=dict(context.variables),
                 suggestions=[
-                    f"Define variable '{node.name}' before using it",
+                    f"Define '{node.name}' before using it",
                     "Check for typos in variable names",
-                    f"Available variables: {available_vars}" if available_vars else "No variables defined yet"
+                    f"Available variables: {available}" if available else "No variables defined yet"
                 ]
             )
-    
+
     def visit_integer(self, node: IntegerNode) -> int:
-        """Execute integer literals."""
+        """Return the integer literal value."""
         self._check_operation_limit()
-        
-        # Validate integer bounds
         self._check_integer_bounds(node.value)
-        
-        # Record monitoring event
+
         if self.runtime_monitor:
-            self.runtime_monitor.record_operation("literal", f"integer {node.value}")
-        
+            self.runtime_monitor.record_operation("literal", str(node.value))
+
         return node.value
-    
-    def visit_print(self, node: PrintNode) -> Any:
-        """Execute print statements."""
-        context = getattr(self, '_current_context', None)
-        if context is None:
-            raise AegisRuntimeError("No execution context available", context)
-        
-        self._check_operation_limit()
-        
-        # Record monitoring event
-        if self.runtime_monitor:
-            self.runtime_monitor.record_operation("print", f"print {node.identifier}")
-        
-        try:
-            # Get variable value
-            value = context.get_variable(node.identifier)
-            
-            # Record variable access
-            if self.runtime_monitor:
-                self.runtime_monitor.record_variable_access(node.identifier, "read")
-            
-            # Add to output buffer
-            context.add_output(str(value))
-            
-            # Also print to console for immediate feedback
-            print(value)
-            
-        except KeyError:
-            available_vars = list(context.variables.keys()) if context and context.variables else []
+
+    # ------------------------------------------------------------------
+    # Safety helpers
+    # ------------------------------------------------------------------
+
+    def _require_context(self) -> ExecutionContext:
+        ctx = getattr(self, '_current_context', None)
+        if ctx is None:
             raise AegisRuntimeError(
-                f"Cannot print undefined variable: {node.identifier}", 
-                execution_context=context, 
-                variable_state=dict(context.variables) if context else {},
-                suggestions=[
-                    f"Define variable '{node.identifier}' before printing it",
-                    "Check for typos in variable names",
-                    f"Available variables: {available_vars}" if available_vars else "No variables defined yet"
-                ]
+                "No execution context — interpreter not properly initialised",
+                execution_context=None,
+                variable_state={}
             )
-        
-        return None
-    
+        return ctx
+
     def _check_operation_limit(self) -> None:
-        """
-        Check if operation limit has been exceeded.
-        
-        Raises:
-            AegisRuntimeError: If too many operations have been performed
-        """
+        """Increment and check the global operation counter."""
         self.operation_count += 1
-        if self.operation_count > self.max_operations:
-            context = getattr(self, '_current_context', None)
+        if self.operation_count > self.MAX_OPERATIONS:
+            ctx = getattr(self, '_current_context', None)
             raise AegisRuntimeError(
-                f"Operation limit exceeded ({self.max_operations})", 
-                execution_context=context, 
-                variable_state=dict(context.variables) if context else {},
+                f"Operation limit exceeded ({self.MAX_OPERATIONS})",
+                execution_context=ctx,
+                variable_state=dict(ctx.variables) if ctx else {},
                 suggestions=[
-                    f"Reduce program complexity (current: {self.operation_count} operations)",
-                    f"Increase operation limit (current: {self.max_operations})",
-                    "Optimize program logic to use fewer operations"
+                    "Reduce program complexity",
+                    "Check for infinite loops",
+                    "Optimise expressions to reduce operation count"
                 ]
             )
-    
+
     def _check_integer_bounds(self, value: int) -> None:
-        """
-        Check if integer value is within safe bounds.
-        
-        Args:
-            value: Integer value to check
-            
-        Raises:
-            AegisRuntimeError: If value is out of bounds
-        """
-        if value < self.min_integer or value > self.max_integer:
-            context = getattr(self, '_current_context', None)
-            raise AegisRuntimeError(f"Integer overflow: {value} is out of bounds", 
-                                   context, context.variables if context else None)
-    
+        """Enforce 32-bit integer range."""
+        if value < self.MIN_INTEGER or value > self.MAX_INTEGER:
+            ctx = getattr(self, '_current_context', None)
+            raise AegisRuntimeError(
+                f"Integer overflow: {value} out of 32-bit range",
+                execution_context=ctx,
+                variable_state=dict(ctx.variables) if ctx else {}
+            )
+
+    def _assert_integer(self, value: Any, label: str) -> None:
+        """Raise a runtime error if value is not an int."""
+        if not isinstance(value, int):
+            ctx = getattr(self, '_current_context', None)
+            raise AegisRuntimeError(
+                f"{label} must be integer, got {type(value).__name__}",
+                execution_context=ctx,
+                variable_state=dict(ctx.variables) if ctx else {}
+            )
+
+    # ------------------------------------------------------------------
+    # Introspection helpers
+    # ------------------------------------------------------------------
+
     def get_operation_count(self) -> int:
-        """
-        Get the current operation count.
-        
-        Returns:
-            Number of operations performed in current execution
-        """
         return self.operation_count
-    
+
     def reset_operation_count(self) -> None:
-        """Reset the operation counter."""
         self.operation_count = 0
-    
+
     def set_runtime_monitor(self, monitor) -> None:
-        """Set the runtime monitor for this interpreter."""
         self.runtime_monitor = monitor
