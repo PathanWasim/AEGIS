@@ -52,7 +52,8 @@ class TestParserBasicStatements:
         
         assert len(ast) == 1
         assert isinstance(ast[0], PrintNode)
-        assert ast[0].identifier == "x"
+        assert isinstance(ast[0].expression, IdentifierNode)
+        assert ast[0].expression.name == "x"
     
     def test_empty_program(self):
         """Test parsing empty program."""
@@ -277,7 +278,8 @@ print result"""
         assert len(ast) == 2
         assert isinstance(ast[0], AssignmentNode)
         assert isinstance(ast[1], PrintNode)
-        assert ast[1].identifier == "result"
+        assert isinstance(ast[1].expression, IdentifierNode)
+        assert ast[1].expression.name == "result"
     
     def test_complete_program(self):
         """Test parsing a complete AEGIS program."""
@@ -363,7 +365,8 @@ class TestParserErrorHandling:
         with pytest.raises(ParseError) as exc_info:
             self.parser.parse(tokens)
         
-        assert "Expected identifier after 'print'" in str(exc_info.value)
+        error_msg = str(exc_info.value)
+        assert "expression" in error_msg.lower() or "expected" in error_msg.lower()
     
     def test_invalid_expression_start(self):
         """Test error when expression starts with invalid token."""

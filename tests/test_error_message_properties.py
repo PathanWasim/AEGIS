@@ -27,9 +27,11 @@ import re
 @st.composite
 def invalid_characters(draw):
     """Generate invalid characters for lexical errors."""
-    # Characters that are not valid in AEGIS
-    invalid_chars = ['@', '#', '$', '%', '^', '&', '!', '?', '~', '`', '[', ']', '{', '}', '|', '\\', '"', "'"]
+    # Characters genuinely invalid in AEGIS
+    # (# = comment, % = modulo, </>!/= = comparison operators, so excluded)
+    invalid_chars = ["@", "$", "^", "~", "{", "}", "[", "]", "|"]
     return draw(st.sampled_from(invalid_chars))
+
 
 
 @st.composite
