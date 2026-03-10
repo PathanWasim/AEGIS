@@ -39,7 +39,7 @@ from aegis.lexer import Lexer
 from aegis.lexer.tokens import TokenType
 
 # ── App setup ───────────────────────────────────────────────────────────────
-app = Flask(__name__, static_folder="static", static_url_path="")
+app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)
 
 # Use a temp file for trusted trust database during web sessions
