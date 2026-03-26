@@ -672,9 +672,41 @@
           "execution_time": 0.0
         }
       ]
+    },
+    "c0e2672e4c507af1": {
+      "code_hash": "c0e2672e4c507af1",
+      "current_score": 0.28,
+      "execution_count": 2,
+      "successful_executions": 2,
+      "violation_count": 0,
+      "last_execution": "2026-03-11T14:53:42.495806",
+      "last_violation": null,
+      "first_execution": "2026-03-11T14:52:48.280654",
+      "trust_history": [
+        {
+          "timestamp": "2026-03-11T14:52:48.280654",
+          "score_before": 0.14,
+          "score_after": 0.28,
+          "execution_count": 1,
+          "had_violations": [],
+          "instruction_count": 13,
+          "execution_time": 0.0,
+          "increment": 0.14,
+          "reason": "successful_execution"
+        },
+        {
+          "timestamp": "2026-03-11T14:53:42.495806",
+          "score_before": 0.28,
+          "score_after": 0.28,
+          "execution_count": 2,
+          "had_violations": [],
+          "instruction_count": 13,
+          "execution_time": 0.0
+        }
+      ]
     }
   },
   "trust_threshold": 1.0,
   "optimization_enabled": true,
-  "last_updated": "2026-03-08T16:16:50.504955"
+  "last_updated": "2026-03-11T14:53:42.497310"
 }
