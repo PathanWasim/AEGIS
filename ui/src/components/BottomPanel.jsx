@@ -15,9 +15,10 @@ const TABS = [
 ]
 
 export default function BottomPanel({
+  height,
   activeTab, onTabChange,
   terminalLines, problems, violations, metrics,
-  astData, bytecodeData, irData, debugSteps, code,
+  astData, bytecodeData, irData, debugSteps,
 }) {
   const terminalRef = useRef(null)
   const [debugStep, setDebugStep] = useState(0)
@@ -31,8 +32,8 @@ export default function BottomPanel({
   const curStep = debugSteps?.[debugStep]
 
   return (
-    <div className={s.panel}>
-      {/* Tab bar */}
+    <div className={s.panel} style={{ height, flexShrink: 0 }}>
+      {/* ── Tab header ── */}
       <div className={s.header}>
         {TABS.map(t => (
           <button
@@ -43,6 +44,7 @@ export default function BottomPanel({
             {t.label}
             {t.id === 'problems'   && problems.length   > 0 && <span className={s.badge}>{problems.length}</span>}
             {t.id === 'violations' && violations.length > 0 && <span className={s.badge} style={{ background: '#ca3a31' }}>{violations.length}</span>}
+            {t.id === 'ast'        && astData?.length       > 0 && <span className={s.badge} style={{ background: '#007acc' }}>{astData.length}</span>}
           </button>
         ))}
       </div>
@@ -66,12 +68,12 @@ export default function BottomPanel({
       {activeTab === 'problems' && (
         <div className={s.body}>
           {problems.length === 0
-            ? <div className={s.empty}>No problems detected in workspace.</div>
+            ? <div className={s.empty}>No problems detected.</div>
             : problems.map(p => (
                 <div key={p.id} className={s.probRow}>
-                  <AlertCircle size={14} className={s.errIcon} />
+                  <AlertCircle size={13} className={s.errIcon} />
                   <span className={s.probMsg}>{p.msg}</span>
-                  <span className={s.probLoc}>{p.file} {p.loc}</span>
+                  <span className={s.probLoc}>{p.file}</span>
                 </div>
               ))
           }
@@ -87,7 +89,7 @@ export default function BottomPanel({
               <div className={s.metricGrid}>
                 <MetricCard label="Execution Time"  value={metrics.time}     />
                 <MetricCard label="Tokens Parsed"   value={metrics.tokens}   />
-                <MetricCard label="Optimized"       value={metrics.optimized} color={metrics.optimized === 'Yes' ? '#89d185' : undefined} />
+                <MetricCard label="Optimized"       value={metrics.optimized} color={metrics.optimized === 'Yes' ? '#89d185' : '#858585'} />
                 <MetricCard label="Code Hash"       value={'#' + metrics.hash} mono />
                 {metrics.pipeline && (
                   <div className={s.pipelineCard}>
@@ -110,7 +112,7 @@ export default function BottomPanel({
       {activeTab === 'violations' && (
         <div className={`${s.body} ${s.violBody}`}>
           {violations.length === 0
-            ? <div className={s.empty}>No security violations recorded this session.</div>
+            ? <div className={s.empty}>No security violations recorded.</div>
             : (
               <table className={s.violTable}>
                 <thead>
@@ -135,9 +137,9 @@ export default function BottomPanel({
 
       {/* ── AST VIEWER ── */}
       {activeTab === 'ast' && (
-        <div className={s.body}>
+        <div className={`${s.body} ${s.astBody}`}>
           {!astData || astData.length === 0
-            ? <div className={s.empty}>Click "Parse" or run code to see the Abstract Syntax Tree.</div>
+            ? <div className={s.empty}>Click the <strong>AST</strong> button in the toolbar to parse and visualize the abstract syntax tree.</div>
             : <ASTViewer nodes={astData} />
           }
         </div>
@@ -147,16 +149,18 @@ export default function BottomPanel({
       {activeTab === 'bytecode' && (
         <div className={`${s.body} ${s.codeBody}`}>
           {!bytecodeData || bytecodeData.length === 0
-            ? <div className={s.empty}>Click "Bytecode" to compile the AEGIS VM instruction listing.</div>
+            ? <div className={s.empty}>Click <strong>Bytecode</strong> to compile and see the AEGIS VM instruction listing.</div>
             : (
               <table className={s.bcTable}>
-                <thead><tr><th>#</th><th>OpCode</th><th>Arg</th></tr></thead>
+                <thead>
+                  <tr><th>ADDR</th><th>OPCODE</th><th>ARG</th></tr>
+                </thead>
                 <tbody>
                   {bytecodeData.map((instr, i) => (
-                    <tr key={i}>
-                      <td className={`${s.num} ${s.mono}`}>{i.toString().padStart(3, '0')}</td>
+                    <tr key={i} className={instr.opcode === 'HALT' ? s.haltRow : ''}>
+                      <td className={`${s.num} ${s.mono}`}>{i.toString().padStart(4, '0')}</td>
                       <td className={s.opcode}>{instr.opcode}</td>
-                      <td className={s.mono}>{instr.arg ?? ''}</td>
+                      <td className={`${s.mono} ${s.arg}`}>{instr.arg ?? ''}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -170,59 +174,59 @@ export default function BottomPanel({
       {activeTab === 'ir' && (
         <div className={`${s.body} ${s.codeBody}`}>
           {!irData || irData.length === 0
-            ? <div className={s.empty}>Click "IR / TAC" to generate Three-Address Code intermediate representation.</div>
-            : irData.map((line, i) => (
-                <div key={i} className={s.irLine}>
-                  <span className={s.irIdx}>{i.toString().padStart(2, '0')}</span>
-                  <span className={irClass(line)}>{line}</span>
-                </div>
-              ))
+            ? <div className={s.empty}>Click <strong>IR</strong> to generate Three-Address Code intermediate representation.</div>
+            : (
+              <div className={s.irBlock}>
+                <div className={s.irHeader}>Three-Address Code (TAC) · {irData.length} instructions</div>
+                {irData.map((line, i) => (
+                  <div key={i} className={s.irLine}>
+                    <span className={s.irIdx}>{i.toString().padStart(2, '0')}</span>
+                    <span className={irClass(line)}>{line}</span>
+                  </div>
+                ))}
+              </div>
+            )
           }
         </div>
       )}
 
       {/* ── DEBUGGER ── */}
       {activeTab === 'debug' && (
-        <div className={s.body}>
+        <div className={s.body} style={{ padding: 0, overflow: 'hidden' }}>
           {!debugSteps || debugSteps.length === 0
-            ? <div className={s.empty}>Click "Debug" to step through the program execution.</div>
+            ? <div className={s.empty} style={{ padding: '8px 14px' }}>Click <strong>Debug</strong> to run the step-by-step execution trace.</div>
             : (
               <div className={s.debugWrap}>
-                {/* Controls */}
                 <div className={s.debugControls}>
-                  <button className={s.dbBtn} onClick={() => setDebugStep(0)} disabled={debugStep === 0}>⏮ Reset</button>
+                  <button className={s.dbBtn} onClick={() => setDebugStep(0)} disabled={debugStep === 0}>⏮</button>
                   <button className={s.dbBtn} onClick={() => setDebugStep(p => Math.max(0, p-1))} disabled={debugStep === 0}>← Prev</button>
                   <span className={s.dbCounter}>Step {debugStep + 1} / {debugSteps.length}</span>
                   <button className={s.dbBtn} onClick={() => setDebugStep(p => Math.min(debugSteps.length-1, p+1))} disabled={debugStep === debugSteps.length-1}>Next →</button>
-                  <button className={s.dbBtn} onClick={() => setDebugStep(debugSteps.length - 1)} disabled={debugStep === debugSteps.length-1}>⏭ End</button>
+                  <button className={s.dbBtn} onClick={() => setDebugStep(debugSteps.length - 1)} disabled={debugStep === debugSteps.length-1}>⏭</button>
+                  <div className={s.dbNodeBadge}>{curStep?.node}</div>
                 </div>
-                {/* Current step info */}
                 {curStep && (
-                  <div className={s.debugContent}>
-                    <div className={s.debugStmt}>
-                      <span className={s.debugNodeType}>{curStep.node}</span>
-                      {curStep.error && <span className={s.debugErr}> ⚠ {curStep.error}</span>}
+                  <div className={s.debugPanels}>
+                    <div className={s.debugVars}>
+                      <div className={s.debugLabel}>Variables</div>
+                      {Object.keys(curStep.env).length === 0
+                        ? <div className={s.debugEmpty}>No variables yet</div>
+                        : Object.entries(curStep.env).map(([k, v]) => (
+                            <div key={k} className={s.varRow}>
+                              <span className={s.varName}>{k}</span>
+                              <span className={s.varEq}>=</span>
+                              <span className={s.varVal}>{JSON.stringify(v)}</span>
+                            </div>
+                          ))
+                      }
                     </div>
-                    <div className={s.debugPanels}>
-                      <div className={s.debugVars}>
-                        <div className={s.debugLabel}>Variables</div>
-                        {Object.keys(curStep.env).length === 0
-                          ? <div className={s.debugEmpty}>—</div>
-                          : Object.entries(curStep.env).map(([k, v]) => (
-                              <div key={k} className={s.varRow}>
-                                <span className={s.varName}>{k}</span>
-                                <span className={s.varVal}>{JSON.stringify(v)}</span>
-                              </div>
-                            ))
-                        }
-                      </div>
-                      <div className={s.debugOut}>
-                        <div className={s.debugLabel}>Output so far</div>
-                        {curStep.output?.length === 0
-                          ? <div className={s.debugEmpty}>—</div>
-                          : curStep.output?.map((l, i) => <div key={i} className={s.outLine}>{l}</div>)
-                        }
-                      </div>
+                    <div className={s.debugOut}>
+                      <div className={s.debugLabel}>Output so far</div>
+                      {(!curStep.output || curStep.output.length === 0)
+                        ? <div className={s.debugEmpty}>—</div>
+                        : curStep.output.map((l, i) => <div key={i} className={s.outLine}>{l}</div>)
+                      }
+                      {curStep.error && <div className={s.dbErrLine}>⚠ {curStep.error}</div>}
                     </div>
                   </div>
                 )}
@@ -237,15 +241,15 @@ export default function BottomPanel({
 
 function MetricCard({ label, value, color, mono }) {
   return (
-    <div style={{ background: '#252526', border: '1px solid #3c3c3c', padding: '12px 14px' }}>
-      <div style={{ fontSize: 11, textTransform: 'uppercase', color: '#858585', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 20, fontFamily: mono ? 'Consolas, monospace' : 'inherit', color: color ?? '#cccccc' }}>{value}</div>
+    <div className="metCard" style={{ background: '#252526', border: '1px solid #3c3c3c', padding: '10px 14px' }}>
+      <div style={{ fontSize: 10, textTransform: 'uppercase', color: '#858585', marginBottom: 4, letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ fontSize: 20, fontFamily: mono ? 'Consolas,monospace' : 'inherit', color: color ?? '#cccccc' }}>{value}</div>
     </div>
   )
 }
 
 function irClass(line) {
-  if (line.endsWith(':')) return s.irLabel
-  if (line.startsWith('GOTO') || line.startsWith('IF_FALSE') || line.startsWith('PRINT')) return s.irKeyword
+  if (/^L\d+:$/.test(line.trim())) return s.irLabel
+  if (/^(GOTO|IF_FALSE|PRINT)/i.test(line.trim())) return s.irKeyword
   return s.irInstr
 }
