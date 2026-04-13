@@ -37,6 +37,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from aegis.pipeline import AegisExecutionPipeline
 from aegis.lexer import Lexer
 from aegis.lexer.tokens import TokenType
+from aegis.parser.parser import Parser
+from aegis.ast.serializer import ast_to_dict
+from aegis.vm.compiler import BytecodeCompiler
+from aegis.vm.vm import AegisVM, VMRuntimeError
+from aegis.ir.tac import TACGenerator
 
 # ── App setup ───────────────────────────────────────────────────────────────
 app = Flask(__name__, static_folder=".", static_url_path="")
@@ -46,6 +51,10 @@ CORS(app)
 TRUST_FILE = os.path.join(tempfile.gettempdir(), "aegis_web_trust.json")
 pipeline = AegisExecutionPipeline(trust_file=TRUST_FILE, trust_threshold=0.0)
 lexer = Lexer()
+parser = Parser()
+bc_compiler = BytecodeCompiler()
+vm = AegisVM()
+tac_gen = TACGenerator()
 
 # ── Example programs ─────────────────────────────────────────────────────────
 EXAMPLES = {
@@ -275,6 +284,157 @@ def reset_trust():
     return jsonify({"success": True, "message": "Trust scores reset"})
 
 
+@app.route("/api/parse", methods=["POST"])
+def parse_ast():
+    """Parse source code and return AST as a JSON tree for the visualizer."""
+    data = request.get_json(force=True)
+    source = data.get("code", "")
+    try:
+        tokens = lexer.tokenize(source)
+        ast = parser.parse(tokens)
+        return jsonify({"success": True, "ast": ast_to_dict(ast), "node_count": len(ast)})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 200
+
+
+@app.route("/api/bytecode", methods=["POST"])
+def compile_bytecode():
+    """Compile source to bytecode and return instruction listing."""
+    data = request.get_json(force=True)
+    source = data.get("code", "")
+    try:
+        tokens = lexer.tokenize(source)
+        ast = parser.parse(tokens)
+        instructions = bc_compiler.compile(ast)
+        return jsonify({
+            "success": True,
+            "instructions": [i.to_dict() for i in instructions],
+            "count": len(instructions),
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 200
+
+
+@app.route("/api/ir", methods=["POST"])
+def generate_ir():
+    """Generate Three-Address Code (TAC) intermediate representation."""
+    data = request.get_json(force=True)
+    source = data.get("code", "")
+    try:
+        tokens = lexer.tokenize(source)
+        ast = parser.parse(tokens)
+        instructions = tac_gen.generate(ast)
+        return jsonify({"success": True, "ir": instructions, "count": len(instructions)})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 200
+
+
+@app.route("/api/debug", methods=["POST"])
+def debug_trace():
+    """
+    Return a full step-by-step execution trace for the debugger.
+    Each step records: statement type, line, and full variable environment.
+    """
+    data = request.get_json(force=True)
+    source = data.get("code", "")
+    try:
+        tokens = lexer.tokenize(source)
+        ast = parser.parse(tokens)
+
+        # Build a simple trace by running the pipeline and recording snapshots
+        from aegis.interpreter.context import ExecutionContext, ExecutionMode
+        from aegis.ast.nodes import AssignmentNode, PrintNode, IfNode, WhileNode
+
+        steps = []
+        env_snap = {}
+
+        class TracingInterpreter:
+            """Thin wrapper that records each statement's effect."""
+            from aegis.interpreter.interpreter import SandboxedInterpreter as _SI
+            _interp = _SI()
+
+            def trace(self, node_list, ctx):
+                for node in node_list:
+                    label = type(node).__name__.replace("Node", "")
+                    before = dict(ctx.variables)
+                    try:
+                        node.accept(self._interp)
+                    except Exception:
+                        pass
+                    steps.append({
+                        "step": len(steps),
+                        "node": label,
+                        "env": dict(ctx.variables),
+                        "output": list(ctx.output_buffer),
+                    })
+
+        from aegis.interpreter.interpreter import SandboxedInterpreter
+        from aegis.runtime.monitor import RuntimeMonitor
+
+        mon = RuntimeMonitor()
+        interp = SandboxedInterpreter(mon)
+        ctx = ExecutionContext()
+
+        # Patch to record step snapshots
+        orig_exec_block = interp._exec_block.__func__ if hasattr(interp._exec_block, '__func__') else None
+
+        # Simple approach: execute and capture output per-node via a patched _exec_block
+        for node in ast:
+            before_vars = dict(ctx.variables)
+            before_out  = list(ctx.output_buffer)
+            try:
+                interp._current_context = ctx
+                node.accept(interp)
+            except Exception as ex:
+                steps.append({
+                    "step": len(steps),
+                    "node": type(node).__name__.replace("Node", ""),
+                    "env": dict(ctx.variables),
+                    "output": list(ctx.output_buffer),
+                    "error": str(ex),
+                })
+                break
+            steps.append({
+                "step": len(steps),
+                "node": type(node).__name__.replace("Node", ""),
+                "env": dict(ctx.variables),
+                "output": list(ctx.output_buffer),
+            })
+
+        return jsonify({"success": True, "steps": steps, "total": len(steps)})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 200
+
+
+@app.route("/api/demo", methods=["POST"])
+def demo_trust_build():
+    """
+    Run the same code N times to demonstrate trust score accumulation.
+    Returns per-run trust scores so the frontend can animate the build-up.
+    Used for presentation: shows Sandboxed → Optimized transition.
+    """
+    data = request.get_json(force=True)
+    source = data.get("code", "")
+    runs   = min(int(data.get("runs", 8)), 20)
+    runs_data = []
+    for i in range(runs):
+        try:
+            result = pipeline.execute(source, verbose=False)
+            runs_data.append({
+                "run": i + 1,
+                "success": result.success,
+                "mode": result.execution_mode,
+                "trust": round(result.trust_score, 3),
+                "trust_level": result.trust_level,
+                "time_ms": round(result.execution_time * 1000, 2),
+                "output": result.output,
+                "optimized": result.execution_mode == "optimized",
+            })
+        except Exception as e:
+            runs_data.append({"run": i + 1, "success": False, "error": str(e)})
+    return jsonify({"success": True, "runs": runs_data})
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -283,3 +443,4 @@ if __name__ == "__main__":
     print(f"  AEGIS Web Dashboard  |  http://localhost:{port}")
     print(f"{'='*55}\n")
     app.run(debug=True, port=port, host="0.0.0.0")
+

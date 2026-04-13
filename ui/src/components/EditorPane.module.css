@@ -1,0 +1,108 @@
+.pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #1e1e1e;
+}
+
+/* Tabs */
+.tabs {
+  height: 35px;
+  background: #252526;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 35px;
+  padding: 0 12px;
+  background: #1e1e1e;
+  color: #ffffff;
+  font-size: 13px;
+  border-top: 1px solid #007acc;
+  border-right: 1px solid #252526;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.tabIcon { color: #519aba; }
+
+.tabClose {
+  margin-left: 4px;
+  opacity: 0.5;
+  cursor: pointer;
+  line-height: 1;
+  font-size: 16px;
+}
+.tabClose:hover { opacity: 1; }
+
+.tabSpacer { flex: 1; }
+
+/* Tool buttons (AST / Bytecode / IR / Debug) */
+.toolBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 4px;
+  padding: 3px 9px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #858585;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.toolBtn:hover { color: #cccccc; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); }
+
+/* Run button */
+.runBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 10px;
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #89d185;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+.runBtn:hover { background: rgba(137,209,133,0.1); border-color: rgba(137,209,133,0.4); }
+.runBtnDisabled { color: #858585; pointer-events: none; border-color: rgba(255,255,255,0.08); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }
+
+/* Breadcrumb */
+.breadcrumb {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 12px;
+  color: #858585;
+  background: #1e1e1e;
+  flex-shrink: 0;
+}
+.bcItem { cursor: pointer; }
+.bcItem:hover { color: #cccccc; }
+.bcSep { color: #4f4f4f; margin: 0 2px; }
+
+/* Monaco wrapper */
+.editorWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}

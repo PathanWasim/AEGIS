@@ -1,557 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AEGIS — Adaptive Execution Guarded Interpreter System</title>
-  <meta name="description" content="AEGIS is a security-first, trust-gated programming language with real-time pipeline visualization." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS IDE</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Inline SVGs for VS Code-like icons */
+    .icon { width: 20px; height: 20px; fill: currentColor; }
+    .icon-sm { width: 14px; height: 14px; fill: currentColor; }
+  </style>
 </head>
 <body>
 
-<!-- ═══ NAV ════════════════════════════════════════════════════════ -->
-<nav>
-  <a class="nav-logo" href="#" onclick="showPage('home');return false;">
-    <div class="nav-logo-icon">🛡️</div>
-    <div>
-      <div class="nav-logo-text">AEGIS</div>
-      <div class="nav-logo-sub">Adaptive Execution Guarded Interpreter System</div>
-    </div>
-  </a>
-
-  <div class="nav-tabs">
-    <button class="nav-tab" data-page="home"       onclick="showPage('home')">🏠 Home</button>
-    <button class="nav-tab" data-page="playground" onclick="showPage('playground')">⚡ Playground</button>
-    <button class="nav-tab" data-page="docs"       onclick="showPage('docs');showDoc('overview',document.querySelector('.docs-link'))">📖 Docs</button>
-    <button class="nav-tab" data-page="about"      onclick="showPage('about')">ℹ️ About</button>
-  </div>
-
-  <div class="nav-right">
-    <div class="server-chip">
-      <div class="dot off" id="srv-dot"></div>
-      <span id="srv-txt">Connecting…</span>
-    </div>
-  </div>
-</nav>
-
-<!-- ═══ HOME ════════════════════════════════════════════════════════ -->
-<div class="page" id="page-home">
-
-  <section class="hero">
-    <div class="hero-badge">
-      <span class="mini-dot"></span>
-      Security-First · Trust-Gated · Real-Time Pipeline
-    </div>
-    <h1 class="hero-title">AEGIS</h1>
-    <p class="hero-sub">
-      A programming language that doesn't just run your code — it <em>guards</em> it.
-      Every execution is scored, sandboxed, and progressively trusted.
-    </p>
-    <div class="hero-btns">
-      <button class="btn-primary" onclick="showPage('playground')">⚡ Open Playground</button>
-      <button class="btn-ghost"   onclick="showPage('docs');showDoc('overview',null)">📖 Read the Docs</button>
-    </div>
-    <div class="hero-demo">
-      <div class="demo-bar">
-        <div class="demo-dot" style="background:#ef4444"></div>
-        <div class="demo-dot" style="background:#f59e0b"></div>
-        <div class="demo-dot" style="background:#10b981"></div>
-        <span>aegis — live demo</span>
+<div id="shell">
+  <div id="workbench">
+    
+    <!-- ACTIVITY BAR (Leftmost) -->
+    <div id="activitybar">
+      <div class="activity-act active" onclick="switchSidebar('explorer')" title="Explorer">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M7 12h10v2H7zM7 8h10v2H7z"/></svg>
       </div>
-      <div class="demo-code" id="hero-code"></div>
-    </div>
-  </section>
-
-  <div class="home-stats">
-    <div class="hstat"><div class="hstat-val">5</div><div class="hstat-lbl">Pipeline Stages</div></div>
-    <div class="hstat"><div class="hstat-val">∞</div><div class="hstat-lbl">Trust Iterations</div></div>
-    <div class="hstat"><div class="hstat-val">0ms</div><div class="hstat-lbl">Sandbox Overhead</div></div>
-    <div class="hstat"><div class="hstat-val">100%</div><div class="hstat-lbl">Open Source</div></div>
-  </div>
-
-  <section class="features">
-    <h2 class="features-title">Why AEGIS?</h2>
-    <p class="features-sub">Built for developers who care about correctness, security, and performance — all at once.</p>
-    <div class="features-grid">
-      <div class="feat-card">
-        <div class="feat-icon">🛡️</div>
-        <div class="feat-title">Security-First Execution</div>
-        <div class="feat-text">Every program runs sandboxed by default. Dangerous patterns are caught at the analysis stage before a single instruction executes.</div>
+      <div class="activity-act" onclick="switchSidebar('trust')" title="Trust Analytics">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 19.93V2.9l7 3.11v4.99c0 4.67-3.13 8.9-7 10.03z"/></svg>
       </div>
-      <div class="feat-card">
-        <div class="feat-icon">📈</div>
-        <div class="feat-title">Progressive Trust Scoring</div>
-        <div class="feat-text">Programs earn trust over repeated safe executions. Trusted code unlocks speed-optimized execution paths automatically.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">⚙️</div>
-        <div class="feat-title">Full Pipeline Visibility</div>
-        <div class="feat-text">Watch your code move through Lexer → Parser → Analyzer → Trust Guard → Executor in real time, with per-stage status.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🔤</div>
-        <div class="feat-title">Rich Token Stream</div>
-        <div class="feat-text">Inspect every lexical token with colour-coded categories. Filter by type, hover for position info — perfect for learning and debugging.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">⚡</div>
-        <div class="feat-title">Trust-Gated Optimisation</div>
-        <div class="feat-text">Once a program has proven safe through repeated execution, AEGIS's optimizer kicks in and applies constant folding and dead-code elimination.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🌐</div>
-        <div class="feat-title">Web Playground</div>
-        <div class="feat-text">Write, run, and debug AEGIS programs in your browser. No install required — just start the local server and open this page.</div>
-      </div>
-    </div>
-  </section>
-
-</div><!-- /home -->
-
-<!-- ═══ PLAYGROUND ══════════════════════════════════════════════════ -->
-<div class="page" id="page-playground">
-<div class="playground">
-
-  <!-- LEFT: Editor column -->
-  <div class="ed-col">
-
-    <!-- Code editor -->
-    <div class="panel" style="flex:1">
-      <div class="ph">
-        <div class="pt"><span class="dot"></span>SOURCE CODE</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button onclick="clearEditor()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:3px 8px;border-radius:4px;font-family:var(--sans);" title="Clear editor">✕ Clear</button>
-          <button onclick="navigator.clipboard.writeText(document.getElementById('code-editor').value)" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;padding:3px 8px;border-radius:4px;font-family:var(--sans);" title="Copy code">⎘ Copy</button>
-        </div>
-      </div>
-      <div class="pb">
-        <div class="editor-wrap">
-          <div class="line-nums" id="line-nums">1</div>
-          <textarea id="code-editor" spellcheck="false" placeholder="# Write your AEGIS program here…
-x = 42
-print x"></textarea>
-        </div>
+      <div class="activity-act" onclick="switchSidebar('settings')" title="Settings">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
       </div>
     </div>
 
-    <!-- Examples -->
-    <div class="panel">
-      <div class="ph">
-        <div class="pt">📚 EXAMPLES</div>
-      </div>
-      <div class="pb">
-        <div class="examples-grid" id="examples-grid">
-          <div style="color:var(--txt3);font-size:12px;grid-column:1/-1;padding:12px;">Loading…</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Run button -->
-    <button class="run-btn" id="run-btn" onclick="runCode()">
-      <span>▶</span>
-      <span>RUN PROGRAM</span>
-      <span class="shortcut">Ctrl+Enter</span>
-    </button>
-
-  </div><!-- /ed-col -->
-
-  <!-- RIGHT: Results column -->
-  <div class="res-col">
-
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card" id="stat-trust">
-        <div class="stat-lbl">Trust Score</div>
-        <div class="stat-val" id="trust-val">—</div>
-        <div class="trust-bar"><div class="trust-fill" id="trust-fill" style="width:0%"></div></div>
-        <div class="stat-sub" id="trust-sub">Not executed yet</div>
-      </div>
-      <div class="stat-card" id="stat-time">
-        <div class="stat-lbl">Exec Time</div>
-        <div class="stat-val" id="time-val">—</div>
-        <div class="stat-sub">milliseconds</div>
-      </div>
-      <div class="stat-card" id="stat-tokens">
-        <div class="stat-lbl">Tokens</div>
-        <div class="stat-val" id="tokens-val">—</div>
-        <div class="stat-sub">lexical units</div>
-      </div>
-      <div class="stat-card" id="stat-mode">
-        <div class="stat-lbl">Exec Mode</div>
-        <div class="stat-val" id="mode-val" style="font-size:16px">—</div>
-        <div class="stat-sub" id="mode-sub">awaiting execution</div>
-      </div>
-    </div>
-
-    <!-- Output + Tokens -->
-    <div class="mid-row">
-
-      <!-- Output -->
-      <div class="panel">
-        <div class="ph">
-          <div class="pt">📤 OUTPUT</div>
-          <button onclick="clearOutput()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;font-family:var(--sans);">clear</button>
-        </div>
-        <div class="pb">
-          <div class="output-area" id="output-area">
-            <div class="empty"><div class="empty-icon">💻</div><span>Run a program to see output</span></div>
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      
+      <!-- Explorer View -->
+      <div id="sb-explorer" class="sidebar-view active">
+        <div class="sidebar-title">EXPLORER</div>
+        <div class="sidebar-content">
+          <div class="sb-section-header">AEGIS PROJECT</div>
+          <div class="sb-list" id="explorer-files">
+            <div class="sb-item active" onclick="loadExample('fibonacci', this)"><svg class="icon-sm" style="color:var(--tok-kw);margin-right:6px" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>fibonacci.aegis</div>
+            <div class="sb-item" onclick="loadExample('hello', this)"><svg class="icon-sm" style="color:var(--tok-kw);margin-right:6px" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>hello_world.aegis</div>
+            <div class="sb-item" onclick="loadExample('security_demo', this)"><svg class="icon-sm" style="color:var(--error);margin-right:6px" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>security_demo.aegis</div>
           </div>
         </div>
       </div>
 
-      <!-- Token stream -->
-      <div class="panel">
-        <div class="ph">
-          <div class="pt">🔤 TOKENS</div>
-          <span style="font-size:10px;color:var(--txt3)" id="tok-count">—</span>
-        </div>
-        <div class="pb">
-          <div class="token-filters">
-            <button class="tf-btn on" onclick="toggleFilter('keyword',this)">keyword</button>
-            <button class="tf-btn on" onclick="toggleFilter('identifier',this)">ident</button>
-            <button class="tf-btn on" onclick="toggleFilter('literal',this)">literal</button>
-            <button class="tf-btn on" onclick="toggleFilter('operator',this)">op</button>
-            <button class="tf-btn on" onclick="toggleFilter('structural',this)">struct</button>
+      <!-- Trust Analytics View -->
+      <div id="sb-trust" class="sidebar-view">
+        <div class="sidebar-title">TRUST ANALYTICS</div>
+        <div class="sidebar-content">
+          <div class="sb-section-header">CURRENT FILE</div>
+          <div style="padding:10px 15px">
+            <div style="font-size:32px;font-family:var(--font-mono);font-weight:700;color:var(--txt-primary)" id="sb-trust-score">—</div>
+            <div style="font-size:11px;color:var(--txt-secondary);margin-top:2px" id="sb-trust-lvl">NOT RUN</div>
+            <div style="height:3px;background:var(--border);margin-top:10px;border-radius:2px;overflow:hidden"><div id="sb-trust-bar" style="height:100%;width:0%;background:var(--success);transition:width 0.3s"></div></div>
           </div>
-          <div class="token-area" id="token-area">
-            <div class="empty"><div class="empty-icon">✦</div><span>Tokens appear here</span></div>
+          <div class="sb-setting" style="border:none">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--txt-secondary)">Runs</span><span id="sb-trust-runs" style="font-family:var(--font-mono)">0</span></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--txt-secondary)">Violations</span><span id="sb-trust-viols" style="font-family:var(--font-mono);color:var(--error)">0</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--txt-secondary)">Optimized</span><span id="sb-trust-opt" style="font-family:var(--font-mono)">No</span></div>
           </div>
         </div>
       </div>
 
-    </div><!-- /mid-row -->
-
-    <!-- Pipeline -->
-    <div class="panel">
-      <div class="ph"><div class="pt">⚙️ PIPELINE STAGES</div></div>
-      <div class="pb">
-        <div class="pipeline">
-          <div class="stage" id="stage-sl">
-            <div class="s-icon">📝</div>
-            <div class="s-name">Lexer</div>
-            <div class="s-time" id="st-sl"></div>
+      <!-- Settings View -->
+      <div id="sb-settings" class="sidebar-view">
+        <div class="sidebar-title">SETTINGS</div>
+        <div class="sidebar-content">
+          <div class="sb-section-header">EXECUTION</div>
+          <div class="sb-setting">
+            <label>Mode</label>
+            <select id="cfg-mode" class="sb-input">
+              <option value="sandboxed">Sandboxed (Safe)</option>
+              <option value="optimized">Optimized (Fast)</option>
+            </select>
           </div>
-          <div class="stage" id="stage-sp">
-            <div class="s-icon">🌳</div>
-            <div class="s-name">Parser</div>
-            <div class="s-time" id="st-sp"></div>
+          <div class="sb-section-header">TRUST POLICY</div>
+          <div class="sb-setting">
+            <label>Trust Threshold</label>
+            <div class="sb-setting-desc">Score required for optimization.</div>
+            <input type="number" step="0.1" min="0" max="1" value="0.8" class="sb-input" id="cfg-threshold">
           </div>
-          <div class="stage" id="stage-sa">
-            <div class="s-icon">🔍</div>
-            <div class="s-name">Analyzer</div>
-            <div class="s-time" id="st-sa"></div>
-          </div>
-          <div class="stage" id="stage-st">
-            <div class="s-icon">🛡️</div>
-            <div class="s-name">Trust</div>
-            <div class="s-time" id="st-st"></div>
-          </div>
-          <div class="stage" id="stage-se">
-            <div class="s-icon">⚡</div>
-            <div class="s-name">Executor</div>
-            <div class="s-time" id="st-se"></div>
+          <div class="sb-section-header">SECURITY</div>
+          <div class="sb-setting" style="border-bottom:none">
+            <label>Block Division by Zero</label>
+            <select class="sb-input"><option>Enabled</option><option>Warning Only</option></select>
           </div>
         </div>
       </div>
+
     </div>
 
-  </div><!-- /res-col -->
-</div><!-- /playground grid -->
-</div><!-- /page-playground -->
-
-<!-- ═══ DOCS ══════════════════════════════════════════════════════ -->
-<div class="page" id="page-docs">
-<div class="docs">
-
-  <!-- Sidebar nav -->
-  <div class="docs-nav">
-    <h3>Getting Started</h3>
-    <span class="docs-link active" onclick="showDoc('overview',this)">Overview</span>
-    <span class="docs-link" onclick="showDoc('syntax',this)">Syntax</span>
-    <h3>Reference</h3>
-    <span class="docs-link" onclick="showDoc('keywords',this)">Keywords</span>
-    <span class="docs-link" onclick="showDoc('operators',this)">Operators</span>
-    <span class="docs-link" onclick="showDoc('tokens',this)">Token Types</span>
-    <h3>Architecture</h3>
-    <span class="docs-link" onclick="showDoc('pipeline',this)">Pipeline</span>
-    <span class="docs-link" onclick="showDoc('trust',this)">Trust Model</span>
-    <h3>Examples</h3>
-    <span class="docs-link" onclick="showDoc('examples',this)">Code Samples</span>
-  </div>
-
-  <!-- Content area -->
-  <div class="docs-content">
-
-    <!-- Overview -->
-    <div class="docs-section active" id="doc-overview">
-      <h1>AEGIS Language Overview</h1>
-      <p>AEGIS (<em>Adaptive Execution Guarded Interpreter System</em>) is a minimal, imperative programming language designed around a <strong>security-first</strong> execution model. Rather than blindly running code, AEGIS evaluates trust and adjusts its execution strategy accordingly.</p>
-      <h2>Core Principles</h2>
-      <ul>
-        <li><strong>Security by default</strong> — all programs start sandboxed</li>
-        <li><strong>Progressive trust</strong> — repeated safe runs build a trust score</li>
-        <li><strong>Trust-gated optimisation</strong> — only trusted code gets optimized</li>
-        <li><strong>Full pipeline transparency</strong> — see exactly what happens at each stage</li>
-      </ul>
-      <h2>Quick Start</h2>
-      <p>Start the server with <code>python webapp/server.py</code>, then open the <span style="color:var(--blue);cursor:pointer" onclick="showPage('playground')">Playground</span> tab and write your first program:</p>
-      <div class="doc-code">
-        <button class="try-btn" onclick="tryExample('x = 42\nprint x')">▶ Try it</button>
-        <span class="sh-cmt"># Assign a value and print it</span><br>
-        x = <span class="sh-num">42</span><br>
-        <span class="sh-kw">print</span> x
-      </div>
-    </div>
-
-    <!-- Syntax -->
-    <div class="docs-section" id="doc-syntax">
-      <h1>Syntax</h1>
-      <p>AEGIS uses indentation-free, line-based syntax. Blocks are terminated with the <code>end</code> keyword.</p>
-      <h2>Assignment</h2>
-      <div class="doc-code">x = <span class="sh-num">10</span><br>name = <span class="sh-num">42</span></div>
-      <h2>If / Else</h2>
-      <div class="doc-code">
-        <button class="try-btn" onclick="tryExample('x = 15\ny = 10\nif x > y\n  result = x\nelse\n  result = y\nend\nprint result')">▶ Try it</button>
-        <span class="sh-kw">if</span> x <span class="sh-op">&gt;</span> y<br>
-        &nbsp;&nbsp;result = x<br>
-        <span class="sh-kw">else</span><br>
-        &nbsp;&nbsp;result = y<br>
-        <span class="sh-kw">end</span>
-      </div>
-      <h2>While Loop</h2>
-      <div class="doc-code">
-        <button class="try-btn" onclick="tryExample('i = 0\nwhile i < 5\n  print i\n  i = i + 1\nend')">▶ Try it</button>
-        <span class="sh-kw">while</span> i <span class="sh-op">&lt;</span> <span class="sh-num">5</span><br>
-        &nbsp;&nbsp;<span class="sh-kw">print</span> i<br>
-        &nbsp;&nbsp;i = i <span class="sh-op">+</span> <span class="sh-num">1</span><br>
-        <span class="sh-kw">end</span>
-      </div>
-      <h2>Comments</h2>
-      <div class="doc-code"><span class="sh-cmt"># This is a comment — everything after # is ignored</span></div>
-    </div>
-
-    <!-- Keywords -->
-    <div class="docs-section" id="doc-keywords">
-      <h1>Keywords</h1>
-      <p>AEGIS has a minimal keyword set, keeping the language small and learnable.</p>
-      <table class="kw-table">
-        <tr><th>Keyword</th><th>Purpose</th></tr>
-        <tr><td>print</td><td>Print a value to standard output</td></tr>
-        <tr><td>if</td><td>Begin a conditional block</td></tr>
-        <tr><td>else</td><td>Alternate branch for an <code>if</code></td></tr>
-        <tr><td>while</td><td>Begin a while loop</td></tr>
-        <tr><td>end</td><td>Close an <code>if</code>, <code>else</code>, or <code>while</code> block</td></tr>
-      </table>
-    </div>
-
-    <!-- Operators -->
-    <div class="docs-section" id="doc-operators">
-      <h1>Operators</h1>
-      <h2>Arithmetic</h2>
-      <table class="kw-table">
-        <tr><th>Operator</th><th>Description</th><th>Example</th></tr>
-        <tr><td>+</td><td>Addition</td><td><code>a + b</code></td></tr>
-        <tr><td>-</td><td>Subtraction</td><td><code>a - b</code></td></tr>
-        <tr><td>*</td><td>Multiplication</td><td><code>a * b</code></td></tr>
-        <tr><td>/</td><td>Division</td><td><code>a / b</code></td></tr>
-        <tr><td>%</td><td>Modulo</td><td><code>a % b</code></td></tr>
-      </table>
-      <h2>Comparison</h2>
-      <table class="kw-table">
-        <tr><th>Operator</th><th>Description</th></tr>
-        <tr><td>==</td><td>Equal to</td></tr>
-        <tr><td>!=</td><td>Not equal to</td></tr>
-        <tr><td>&lt;</td><td>Less than</td></tr>
-        <tr><td>&lt;=</td><td>Less than or equal</td></tr>
-        <tr><td>&gt;</td><td>Greater than</td></tr>
-        <tr><td>&gt;=</td><td>Greater than or equal</td></tr>
-      </table>
-    </div>
-
-    <!-- Tokens -->
-    <div class="docs-section" id="doc-tokens">
-      <h1>Token Types</h1>
-      <p>The AEGIS lexer categorises every token into one of five groups, colour-coded throughout the Playground.</p>
-      <table class="kw-table">
-        <tr><th>Category</th><th>Colour</th><th>Examples</th></tr>
-        <tr><td><span class="tp-keyword token-pill" style="border-radius:6px">keyword</span></td><td>Purple</td><td><code>if, else, while, end, print</code></td></tr>
-        <tr><td><span class="tp-identifier token-pill" style="border-radius:6px">identifier</span></td><td>Cyan</td><td><code>x, total, count</code></td></tr>
-        <tr><td><span class="tp-literal token-pill" style="border-radius:6px">literal</span></td><td>Yellow</td><td><code>42, 0, 100</code></td></tr>
-        <tr><td><span class="tp-operator token-pill" style="border-radius:6px">operator</span></td><td>Orange</td><td><code>+, -, *, /, =, &lt;, &gt;</code></td></tr>
-        <tr><td><span class="tp-structural token-pill" style="border-radius:6px">structural</span></td><td>Grey</td><td><code>(, ), NEWLINE, EOF</code></td></tr>
-      </table>
-    </div>
-
-    <!-- Pipeline -->
-    <div class="docs-section" id="doc-pipeline">
-      <h1>The AEGIS Pipeline</h1>
-      <p>Every program you run passes through five stages before any output appears.</p>
-      <table class="kw-table">
-        <tr><th>Stage</th><th>What it does</th></tr>
-        <tr><td>📝 Lexer</td><td>Converts raw source text into a flat stream of typed tokens</td></tr>
-        <tr><td>🌳 Parser</td><td>Builds an Abstract Syntax Tree (AST) from the token stream</td></tr>
-        <tr><td>🔍 Analyzer</td><td>Performs semantic checks: type safety, undefined variables, division-by-zero detection</td></tr>
-        <tr><td>🛡️ Trust Guard</td><td>Looks up code hash in the trust database; applies sandbox restrictions or grants optimizations</td></tr>
-        <tr><td>⚡ Executor</td><td>Walks the AST and evaluates each node; trusted programs use the optimizer first</td></tr>
-      </table>
-    </div>
-
-    <!-- Trust Model -->
-    <div class="docs-section" id="doc-trust">
-      <h1>Trust Model</h1>
-      <p>AEGIS tracks a <strong>trust score</strong> per unique code hash (SHA-256). Each successful, safe execution increments the score. Higher scores unlock faster execution paths.</p>
-      <div class="trust-ladder">
-        <div class="tl-row">
-          <div class="tl-bar" style="width:60px;background:var(--red)"></div>
-          <div class="tl-lbl" style="color:var(--red)">0.0 – 0.1</div>
-          <div class="tl-desc">NONE — fully sandboxed, all operations checked</div>
+    <!-- MAIN AREA -->
+    <div id="main">
+      
+      <!-- TABS -->
+      <div id="tabs-container">
+        <div class="editor-tab active">
+          <svg class="icon-sm" style="color:var(--tok-kw);margin-right:6px" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          <span id="active-filename">fibonacci.aegis</span>
+          <div class="tab-close"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
         </div>
-        <div class="tl-row">
-          <div class="tl-bar" style="width:100px;background:var(--orange)"></div>
-          <div class="tl-lbl" style="color:var(--orange)">0.1 – 0.3</div>
-          <div class="tl-desc">LOW — building trust through repeated safe runs</div>
-        </div>
-        <div class="tl-row">
-          <div class="tl-bar" style="width:160px;background:#eab308"></div>
-          <div class="tl-lbl" style="color:#eab308">0.3 – 0.6</div>
-          <div class="tl-desc">MEDIUM — gaining trust, reduced sandbox overhead</div>
-        </div>
-        <div class="tl-row">
-          <div class="tl-bar" style="width:210px;background:var(--cyan)"></div>
-          <div class="tl-lbl" style="color:var(--cyan)">0.6 – 0.8</div>
-          <div class="tl-desc">HIGH — near-optimized, most checks skipped</div>
-        </div>
-        <div class="tl-row">
-          <div class="tl-bar" style="width:260px;background:var(--green)"></div>
-          <div class="tl-lbl" style="color:var(--green)">0.8 – 1.0</div>
-          <div class="tl-desc">TRUSTED — optimizer enabled, maximum performance ⚡</div>
+        
+        <div class="editor-actions">
+          <div class="run-action" id="btn-run" onclick="runCode()" title="Run Code (Ctrl+Enter)">
+            <svg class="icon-sm" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Run
+          </div>
         </div>
       </div>
-      <p>Run the <strong>Trust Builder</strong> example in the Playground repeatedly to watch the score climb in real time.</p>
-    </div>
 
-    <!-- Examples -->
-    <div class="docs-section" id="doc-examples">
-      <h1>Code Samples</h1>
-      <h2>Fibonacci Sequence</h2>
-      <div class="doc-code">
-        <button class="try-btn" onclick="tryExample('a = 0\nb = 1\ncount = 0\nwhile count < 10\n  print a\n  temp = a + b\n  a = b\n  b = temp\n  count = count + 1\nend')">▶ Try it</button>
-        a = <span class="sh-num">0</span><br>b = <span class="sh-num">1</span><br>count = <span class="sh-num">0</span><br>
-        <span class="sh-kw">while</span> count <span class="sh-op">&lt;</span> <span class="sh-num">10</span><br>
-        &nbsp;&nbsp;<span class="sh-kw">print</span> a<br>
-        &nbsp;&nbsp;temp = a <span class="sh-op">+</span> b<br>
-        &nbsp;&nbsp;a = b<br>
-        &nbsp;&nbsp;b = temp<br>
-        &nbsp;&nbsp;count = count <span class="sh-op">+</span> <span class="sh-num">1</span><br>
-        <span class="sh-kw">end</span>
+      <!-- BREADCRUMBS -->
+      <div id="breadcrumbs">
+        <span class="bc-item">AEGIS</span><span class="bc-sep">></span><span class="bc-item" id="bc-filename">fibonacci.aegis</span>
       </div>
-      <h2>Sum 1 to N</h2>
-      <div class="doc-code">
-        <button class="try-btn" onclick="tryExample('total = 0\ni = 1\nwhile i <= 100\n  total = total + i\n  i = i + 1\nend\nprint total')">▶ Try it</button>
-        total = <span class="sh-num">0</span><br>i = <span class="sh-num">1</span><br>
-        <span class="sh-kw">while</span> i <span class="sh-op">&lt;=</span> <span class="sh-num">100</span><br>
-        &nbsp;&nbsp;total = total <span class="sh-op">+</span> i<br>
-        &nbsp;&nbsp;i = i <span class="sh-op">+</span> <span class="sh-num">1</span><br>
-        <span class="sh-kw">end</span><br>
-        <span class="sh-kw">print</span> total
+
+      <!-- EDITOR BODY -->
+      <div id="editor-core">
+        <div class="line-numbers" id="line-nums">1</div>
+        <textarea id="code-textarea" spellcheck="false" placeholder="# Write your AEGIS code here"></textarea>
       </div>
-      <h2>Security Violation (Division by Zero)</h2>
-      <div class="doc-code">
-        <button class="try-btn" onclick="tryExample('x = 10\ny = 0\nresult = x / y\nprint result')">▶ Try it</button>
-        x = <span class="sh-num">10</span><br>y = <span class="sh-num">0</span><br>
-        result = x <span class="sh-op">/</span> y &nbsp;<span class="sh-cmt"># ⚠ triggers security analysis</span><br>
-        <span class="sh-kw">print</span> result
-      </div>
-    </div>
 
-  </div><!-- /docs-content -->
-</div><!-- /docs grid -->
-</div><!-- /page-docs -->
+      <!-- BOTTOM PANEL -->
+      <div id="bottom-panel">
+        <div id="panel-header">
+          <div class="panel-tab active" onclick="switchPanel('terminal', this)">TERMINAL</div>
+          <div class="panel-tab" onclick="switchPanel('problems', this)">PROBLEMS <span class="panel-badge" id="badge-problems" style="display:none">0</span></div>
+          <div class="panel-tab" onclick="switchPanel('metrics', this)">METRICS</div>
+          <div class="panel-tab" onclick="switchPanel('violations', this)">VIOLATION LOG</div>
+          <div class="panel-actions">
+            <div class="panel-action" onclick="toggleBottomPanel()" title="Toggle Panel"><svg class="icon-sm" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+          </div>
+        </div>
+        
+        <div id="pnl-terminal" class="panel-body active">
+          <div style="color:var(--txt-secondary);margin-bottom:8px">AEGIS execution host ready. Use the Run button in the top right to execute.</div>
+          <div id="terminal-output"></div>
+        </div>
+        
+        <div id="pnl-problems" class="panel-body ui-font">
+          <div id="problems-list" style="color:var(--txt-secondary);padding:10px">No problems have been detected in the workspace.</div>
+        </div>
 
-<!-- ═══ ABOUT ══════════════════════════════════════════════════════ -->
-<div class="page" id="page-about">
-<div class="about">
+        <div id="pnl-metrics" class="panel-body ui-font">
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-card-lbl">Execution Time</div>
+              <div class="metric-card-val" id="met-time">—</div>
+              <div class="metric-card-sub">Last pipeline run</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-lbl">Tokens Parsed</div>
+              <div class="metric-card-val" id="met-tok">—</div>
+              <div class="metric-card-sub">Lexical analysis</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-lbl">Total Runs</div>
+              <div class="metric-card-val" id="met-runs">0</div>
+              <div class="metric-card-sub">This session</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-lbl">Pipeline Stages</div>
+              <div class="metric-card-sub" style="margin-top:0;line-height:1.6" id="met-stages">
+                Lexer: <span style="color:var(--txt-secondary)">Pending</span><br>
+                Parser: <span style="color:var(--txt-secondary)">Pending</span><br>
+                Analyzer: <span style="color:var(--txt-secondary)">Pending</span><br>
+                Executor: <span style="color:var(--txt-secondary)">Pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  <div class="about-hero">
-    <h1>About AEGIS</h1>
-    <p>AEGIS is a research-grade, security-first programming language and runtime built to explore adaptive execution models — where the interpreter itself becomes smarter and faster as code proves safe over time.</p>
-  </div>
+        <div id="pnl-violations" class="panel-body ui-font">
+          <table class="vs-table">
+            <thead>
+              <tr><th>Time</th><th>File</th><th>Type</th><th>Message</th></tr>
+            </thead>
+            <tbody id="viol-tbody">
+              <tr><td colspan="4" style="text-align:center;padding:15px;color:var(--txt-secondary)">No security violations recorded.</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-  <!-- Pipeline diagram -->
-  <h2 style="text-align:center;margin-bottom:24px;font-size:18px;color:var(--txt2);font-weight:600;letter-spacing:1px;text-transform:uppercase;">Architecture</h2>
-  <div class="pipeline-diagram">
-    <div class="pd-node"><div class="pd-icon">📝</div><div class="pd-name">Lexer</div><div class="pd-desc">Tokenise source</div></div>
-    <div class="pd-arrow">→</div>
-    <div class="pd-node"><div class="pd-icon">🌳</div><div class="pd-name">Parser</div><div class="pd-desc">Build AST</div></div>
-    <div class="pd-arrow">→</div>
-    <div class="pd-node"><div class="pd-icon">🔍</div><div class="pd-name">Analyzer</div><div class="pd-desc">Semantic checks</div></div>
-    <div class="pd-arrow">→</div>
-    <div class="pd-node"><div class="pd-icon">🛡️</div><div class="pd-name">Trust Guard</div><div class="pd-desc">Score &amp; gate</div></div>
-    <div class="pd-arrow">→</div>
-    <div class="pd-node"><div class="pd-icon">⚡</div><div class="pd-name">Executor</div><div class="pd-desc">Evaluate AST</div></div>
-  </div>
-
-  <div class="about-grid">
-    <div class="about-card">
-      <h3>🔧 Technical Stack</h3>
-      <ul>
-        <li>Language runtime written in Python</li>
-        <li>Hand-written recursive-descent parser</li>
-        <li>Visitor-pattern AST evaluator</li>
-        <li>SHA-256 code hashing for trust tracking</li>
-        <li>Flask REST API for web integration</li>
-        <li>Vanilla HTML/CSS/JS frontend (no build step)</li>
-      </ul>
-    </div>
-    <div class="about-card">
-      <h3>🛡️ Security Model</h3>
-      <p>AEGIS treats security not as an afterthought but as the core execution primitive. Programs are sandboxed by default. The static analyzer catches division-by-zero, undefined variables, and infinite-loop risks before execution. Trust scores are persisted across sessions so frequently-run safe programs automatically unlock the optimizer.</p>
-    </div>
-    <div class="about-card">
-      <h3>📁 Project Structure</h3>
-      <ul>
-        <li><code>aegis/lexer/</code> — Tokenizer</li>
-        <li><code>aegis/parser/</code> — AST builder</li>
-        <li><code>aegis/ast/</code> — AST node definitions</li>
-        <li><code>aegis/interpreter/</code> — Evaluator + analyzer</li>
-        <li><code>aegis/compiler/</code> — Optimizer</li>
-        <li><code>aegis/pipeline.py</code> — Execution pipeline</li>
-        <li><code>webapp/</code> — This web dashboard</li>
-      </ul>
-    </div>
-    <div class="about-card">
-      <h3>🚀 Running Locally</h3>
-      <p>Make sure you have Python 3.9+ and Flask installed, then:</p>
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:12px;margin-top:12px;line-height:2">
-        <span style="color:var(--green)">$</span> pip install flask flask-cors<br>
-        <span style="color:var(--green)">$</span> python webapp/server.py<br>
-        <span style="color:var(--txt3)"># Then open http://localhost:5000</span>
       </div>
     </div>
   </div>
 
-</div>
-</div><!-- /page-about -->
-
-<!-- ═══ STATUS BAR ════════════════════════════════════════════════ -->
-<div class="status-bar">
-  <div class="sb-item">
-    <div class="dot" id="sb-srv-dot" style="width:6px;height:6px;border-radius:50%;background:var(--txt3)"></div>
-    <span id="sb-server">Server: connecting…</span>
+  <!-- STATUS BAR -->
+  <div id="statusbar">
+    <div class="sb-group sb-left">
+      <div class="sb-item"><svg class="icon-sm sb-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> AEGIS Server: <span id="sb-srv">Connecting...</span></div>
+      <div class="sb-item"><svg class="icon-sm sb-icon" viewBox="0 0 24 24"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg> <span id="sb-err">0</span></div>
+      <div class="sb-item"><svg class="icon-sm sb-icon" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg> <span id="sb-warn">0</span></div>
+    </div>
+    <div class="sb-group sb-right">
+      <div class="sb-item" id="sb-trust">Trust: —</div>
+      <div class="sb-item" id="sb-mode">Mode: Sandboxed</div>
+      <div class="sb-item">UTF-8</div>
+      <div class="sb-item">AEGIS</div>
+    </div>
   </div>
-  <span class="sb-sep">|</span>
-  <span id="sb-runs">0 runs</span>
-  <span class="sb-sep">|</span>
-  <span id="sb-errors">0 errors</span>
-  <span class="sb-sep">|</span>
-  <span id="sb-avg">avg —ms</span>
-  <span class="sb-sep">|</span>
-  <span>🔒 Security-first</span>
-  <span class="sb-sep">|</span>
-  <span>⚡ Trust-gated</span>
-  <div class="sb-right" id="sb-hash"></div>
+
 </div>
 
 <script src="app.js"></script>

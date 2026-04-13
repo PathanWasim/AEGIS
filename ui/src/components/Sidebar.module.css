@@ -1,0 +1,166 @@
+.sidebar {
+  width: 250px;
+  background: #252526;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid #1e1e1e;
+}
+
+.title {
+  padding: 10px 12px 6px;
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #bdbdbd;
+  flex-shrink: 0;
+}
+
+.section {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #bdbdbd;
+  cursor: default;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 3px 25px;
+  font-size: 13px;
+  color: #cccccc;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item:hover { background: #2a2d2e; }
+.itemActive { background: #37373d; color: #fff; }
+
+.fileIcon { color: #519aba; flex-shrink: 0; }
+
+/* Trust view */
+.trustBlock {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid #3c3c3c;
+}
+.trustScore {
+  font-size: 36px;
+  font-family: Consolas, "Courier New", monospace;
+  font-weight: 700;
+  color: #cccccc;
+  line-height: 1;
+}
+.trustLevel {
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.barTrack {
+  height: 3px;
+  background: #3c3c3c;
+  border-radius: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.barFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.statGrid {
+  padding: 10px 16px;
+  border-bottom: 1px solid #2d2d2d;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.statRow { display: flex; justify-content: space-between; }
+.statLabel { font-size: 12px; color: #858585; }
+.statValue { font-size: 12px; font-family: Consolas, monospace; color: #cccccc; }
+
+.threshRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 16px;
+  font-size: 12px;
+  color: #858585;
+}
+.threshActive { color: #007acc; font-weight: 700; }
+.threshVal { font-family: Consolas, monospace; }
+
+/* Settings */
+.settingRow {
+  padding: 8px 12px;
+  border-bottom: 1px solid #2d2d2d;
+}
+.settingLabel {
+  display: block;
+  font-size: 12px;
+  color: #cccccc;
+  margin-bottom: 4px;
+}
+.select, .input {
+  width: 100%;
+  background: #3c3c3c;
+  border: 1px solid #555;
+  color: #cccccc;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+.select:focus, .input:focus { border-color: #007fd4; }
+
+/* Demo box */
+.demoBox {
+  margin: 8px 12px;
+  padding: 10px 12px;
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  border-radius: 2px;
+}
+.demoDesc {
+  font-size: 11px;
+  color: #858585;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.demoDesc strong { color: #cccccc; }
+.demoBtn {
+  width: 100%;
+  padding: 6px 10px;
+  background: #007acc;
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+.demoBtn:hover:not(:disabled) { background: #1a86d2; }
+.demoBtnRunning {
+  background: #3c3c3c !important;
+  color: #858585;
+  cursor: default;
+}
+.demoBtn:disabled { cursor: default; }
+
+/* Trust chart */
+.chartWrap {
+  padding: 6px 14px 10px;
+}
+.chartLegend {
+  display: flex;
+  gap: 12px;
+  font-size: 10px;
+  margin-top: 4px;
+  color: #858585;
+}
