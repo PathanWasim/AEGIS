@@ -66,14 +66,34 @@ EXAMPLES = {
         "description": "Run repeatedly: Interpreter → Optimized",
         "code": "# Run this multiple times to build trust\nx = 100\ny = 200\ntotal = x + y\nprint total",
     },
-    "security_violation": {
-        "name": "Security Violation",
-        "description": "Division by zero — triggers rollback",
+    "edge_div_zero": {
+        "name": "Edge: Div By Zero",
+        "description": "Static Analyzer catches division by zero",
         "code": "x = 10\ny = 0\nresult = x / y\nprint result",
     },
-    "comparison": {
-        "name": "Comparisons",
-        "description": "All comparison operators",
-        "code": "a = 5\nb = 10\nprint a == b\nprint a != b\nprint a < b\nprint a <= b\nprint a > b\nprint a >= b",
+    "edge_undef_var": {
+        "name": "Edge: Undefined Var",
+        "description": "Static Analyzer catches uninitialized variables",
+        "code": "x = 10\nprint y",
+    },
+    "edge_static_loop": {
+        "name": "Edge: Infinite Loop (Static)",
+        "description": "Static Analyzer flags deterministic infinite loop",
+        "code": "count = 0\nwhile 1 == 1\n  count = count + 1\n  print count\nend",
+    },
+    "edge_overflow": {
+        "name": "Edge: Memory Limit/Overflow",
+        "description": "Static Analyzer warns of 32-bit bound overflow",
+        "code": "x = 99999999999999999\nprint x * x",
+    },
+    "edge_deep_nesting": {
+        "name": "Edge: Deep Nesting",
+        "description": "Static Analyzer prevents stack exhaustion",
+        "code": "if 1 == 1\n  if 2 == 2\n    if 3 == 3\n      if 4 == 4\n        print 5\n      end\n    end\n  end\nend",
+    },
+    "edge_inst_limit": {
+        "name": "Edge: Instruction Limit",
+        "description": "Runtime Monitor halts loop exceeding 1000 ops",
+        "code": "x = 0\n# The condition is valid, but the loop takes too long\nwhile x < 5000\n  x = x + 1\nend\nprint x",
     },
 }
