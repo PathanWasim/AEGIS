@@ -1,0 +1,87 @@
+/* Playground.module.css */
+.playground {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.editorArea {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.resizeHandle {
+  height: 4px;
+  background: var(--border);
+  cursor: row-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.resizeHandle:hover { background: var(--accent); }
+
+.bottomPanel {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.tabBar {
+  display: flex;
+  align-items: center;
+  background: var(--panel2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  height: 30px;
+}
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  height: 100%;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-family: var(--font-ui);
+}
+.tab:hover { color: var(--text); }
+.tabActive { color: var(--text); border-bottom: 1px solid var(--accent); }
+
+.badge {
+  background: var(--red);
+  color: #fff;
+  font-size: 9px;
+  padding: 0 4px;
+  border-radius: 2px;
+  font-weight: 700;
+}
+.tabSpacer { flex: 1; }
+.clearBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 10px;
+  height: 100%;
+  font-family: var(--font-ui);
+}
+.clearBtn:hover { color: var(--text); }
+
+.panelContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.panelContent > * { flex: 1; overflow-y: auto; }

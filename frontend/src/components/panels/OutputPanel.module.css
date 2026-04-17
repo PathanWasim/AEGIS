@@ -1,0 +1,29 @@
+/* OutputPanel.module.css */
+.panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg);
+}
+.line {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 1px 10px;
+  line-height: 20px;
+  color: var(--text);
+}
+.ts   { color: var(--text-dim); font-size: 10px; flex-shrink: 0; min-width: 52px; }
+.pfx  { flex-shrink: 0; width: 12px; text-align: center; }
+.text { word-break: break-all; white-space: pre-wrap; }
+
+/* Typed colors */
+.out    .pfx { color: #4ec9b0; }
+.err    .pfx, .err    .text { color: #f48771; }
+.secerr .pfx, .secerr .text { color: #f48771; }
+.meta   .pfx, .meta   .text { color: var(--text-muted); }
+.info   .pfx, .info   .text { color: var(--text-dim); }
+.metric .pfx { color: #9cdcfe; }
+.metric .text { color: #9cdcfe; }

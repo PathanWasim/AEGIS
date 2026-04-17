@@ -1,0 +1,117 @@
+/* PipelineView.module.css */
+.panel { padding: 10px; overflow-y: auto; }
+
+.pipeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.stageWrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  min-width: 80px;
+}
+.stage.ok      { border-color: #4ec9b0; background: rgba(78,201,176,.07); }
+.stage.error   { border-color: #f48771; background: rgba(244,135,113,.07); }
+.stage.blocked { border-color: #dcdcaa; background: rgba(220,220,170,.07); }
+.stage.skipped { border-color: var(--border); opacity: 0.4; }
+.stage.idle    { border-color: var(--border); }
+
+.indicator {
+  font-size: 14px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  line-height: 1;
+}
+.ok    .indicator { color: #4ec9b0; }
+.error .indicator { color: #f48771; }
+.blocked .indicator { color: #dcdcaa; }
+
+.stageLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.stageDesc {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 80px;
+}
+
+.arrow { font-size: 14px; color: var(--text-dim); padding: 0 4px; margin-top: -16px; }
+.arrowOk   { color: #4ec9b0; }
+.arrowSkip { opacity: 0.25; }
+
+/* Issues */
+.issueList { margin-bottom: 10px; }
+.issueHeader {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.issue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  border-left: 2px solid var(--border);
+}
+.sev_HIGH   { border-left-color: #f48771; background: rgba(244,135,113,.05); }
+.sev_MEDIUM { border-left-color: #dcdcaa; background: rgba(220,220,170,.05); }
+.sev_LOW    { border-left-color: #9cdcfe; background: rgba(156,220,254,.05); }
+
+.sevBadge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+.sev_HIGH   .sevBadge { color: #f48771; }
+.sev_MEDIUM .sevBadge { color: #dcdcaa; }
+.sev_LOW    .sevBadge { color: #9cdcfe; }
+
+.issueLine { color: var(--text-muted); min-width: 30px; }
+.issueType { color: var(--yellow); font-weight: 600; }
+.issueMsg  { color: var(--text); }
+
+.modeInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.modeLabel { color: var(--text-muted); }
+.modeVal   { font-family: var(--font-mono); color: var(--text); font-weight: 600; }
+.mode_optimized   { color: #4ec9b0; }
+.mode_failed      { color: #f48771; }
+.mode_rollback    { color: #f48771; }
+.mode_interpreter { color: #dcdcaa; }
+.sep { color: var(--border); }
+.empty { padding: 12px; color: var(--text-muted); font-size: 12px; }

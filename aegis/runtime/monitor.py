@@ -237,8 +237,9 @@ class RuntimeMonitor:
         
         self.current_metrics.add_operation(operation, details)
         
-        # Check for violations
-        self._check_violations()
+        # Check for violations, but skip if we are just stopping the monitor
+        if operation != "monitor_stop":
+            self._check_violations()
     
     def record_variable_access(self, variable_name: str, access_type: str) -> None:
         """

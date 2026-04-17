@@ -1,0 +1,33 @@
+/* TokenPanel.module.css */
+.panel { padding: 8px; overflow-y: auto; }
+.empty { padding: 12px; color: var(--text-muted); font-size: 12px; }
+.summary {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+.group { margin-bottom: 10px; }
+.groupLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  padding: 0 2px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  color: var(--text);
+  cursor: default;
+}
+.keyword    { color: #c586c0; border-color: #4a3a4a; background: rgba(197,134,192,.08); }
+.operator   { color: #d4d4d4; border-color: #444;    background: var(--panel2); }
+.identifier { color: #9cdcfe; border-color: #2a3d4a; background: rgba(156,220,254,.06); }
+.literal    { color: #b5cea8; border-color: #2d3d2d; background: rgba(181,206,168,.06); }
+.structural { color: var(--text-muted); }

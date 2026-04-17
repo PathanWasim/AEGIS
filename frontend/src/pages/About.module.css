@@ -1,0 +1,61 @@
+/* About.module.css */
+.page { overflow-y: auto; height: 100%; background: var(--bg); }
+.header {
+  padding: 24px 32px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.subtitle { font-size: 12px; color: var(--text-muted); }
+
+.content { padding: 24px 32px; display: flex; flex-direction: column; gap: 28px; }
+.section {}
+.sectionTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.arch {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: #4ec9b0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 16px 20px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.compGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+.comp {
+  background: var(--panel);
+  padding: 12px 14px;
+}
+.compName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9cdcfe;
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+}
+.compDesc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 12px; max-width: 600px; }
+.table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.table td:first-child { color: var(--text-muted); width: 100px; }
+.code { font-family: var(--font-mono); color: #ce9178; }

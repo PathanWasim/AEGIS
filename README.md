@@ -1,75 +1,60 @@
-# AEGIS - Adaptive Execution Guarded Interpreter System
+# AEGIS Compiler IDE
+**Adaptive Execution Guarded Interpreter System**
 
-**A Security-First Academic Compiler Design Project.**
+## Project Overview
+AEGIS is a production-grade compiler and execution environment built for academic and cybersecurity research. It implements a security-first architecture where code evaluation defaults to a strictly monitored sandbox. The system features a custom programming language, dedicated intermediate representations, and a comprehensive React-based IDE frontend.
 
-AEGIS is an academic project demonstrating a novel *security-first execution model*. Unlike traditional compilers that optimize for speed by default, AEGIS starts all code in a sandboxed interpreter and promotes it to optimized bytecode execution only after it demonstrates safe behavior through runtime monitoring and trust-building.
+![AEGIS Architecture Block](./frontend/public/favicon.ico)
 
-## Core Concept
-**Security is Default. Performance is Conditional.**
-1. **Sandboxed start** - No code runs optimized initially.
-2. **Runtime monitoring** - Code builds "trust" through safe execution.
-3. **Execution privileges** - Trust unlocks the high-performance compiled bytecode VM.
-4. **Instant rollback** - Security violations immediately revert execution to the sandbox.
+## Features
+- **Dual-Mode Evaluation**: Sandboxed Interpreter (safe, default) and an Optimized VM (fast, privilege-based).
+- **Dynamic Trust Metric**: Algorithms incrementally build trust across discrete runs. Unlocking optimizations demands consistent structural integrity.
+- **Static Analysis**: Pre-execution scans identify memory, looping, and logic defects before variable mutation.
+- **Runtime Integrity Hooks**: Active instruction enumeration limits operations, preventing algorithmic halting problems from degrading server posture.
+- **Integrated IDE**: Monaco-driven web interface featuring stage-by-stage pipeline observation and real-time structured AST mapping.
 
-## System Architecture
+## Architecture
+The system employs a strict 7-stage evaluation pipeline to ensure operational determinism:
+`Lexed → Parsed → AST Built → Analyzed → Interpreted → Trust Verified → Optimized`
+
+## Execution Model
+AEGIS reverses classic compiler theory:
+1. **Pessimistic Default**: Every execution starts in the restricted Interpreter environment.
+2. **Telemetry Aggregation**: Running operations log cycle counts, computational bounds, and states.
+3. **Privilege Application**: If the static profile is benign and previous telemetry yields `Trust >= 1.0`, subsequent runs promote to the Cached VM.
+4. **Algorithmic Rollback**: Should the Cached VM branch into a violation, execution terminates, Trust resets to `0.0`, and code reverts to the Sandbox.
+
+## Tech Stack
+* **Frontend**: React 19, Vite, Zustand, Monaco Editor, Recharts.
+* **Backend**: Python 3.11+, Flask.
+
+## Setup Instructions
+
+### Backend (Python/Flask)
+```bash
+cd backend
+pip install -r ../requirements.txt 
+python app.py
+```
+*Served on `http://127.0.0.1:5000/`*
+
+### Frontend (React)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+*Served on `http://localhost:3000/`*
+
+## Example Usage
+Input syntax in the left panel. Press `Ctrl+Enter` or click `Run`.
 
 ```text
-Source → Lexer → Parser → AST → Static Analyzer
-                                       ↓
-                        Sandboxed Interpreter ⟷ Runtime Monitor
-                                       ↓               ↓
-                        Trust Manager ⟷ IR/VM (Optimized Execution)
-```
-
-**New Additions:** AEGIS now features a full **React-based Web Dashboard** with real-time interactive visualizations, a step-by-step debugger, and advanced compiler components (IR/TAC generation + Bytecode VM).
-
-## Language Features
-AEGIS implements a custom structured language aimed at demonstrating secure execution:
-```aegis
-# Core Types & Math
-x = 10
-y = 20
-result = (x + y) * 2 % 3
-
-# Control Flow
-if result == 0
-  print x
-else
-  while y > 0
-    y = y - 1
-  end
+count = 0
+while count < 5
+  print count
+  count = count + 1
 end
-
-# Secure Output
-print result
 ```
-* **Supported operations**: `+`, `-`, `*`, `/`, `%`
-* **Comparisons**: `==`, `!=`, `<`, `<=`, `>`, `>=`
-* **Control flow**: `if`/`else` blocks and `while` loops. 
-* *Note: The language intentionally lacks file I/O, user input, and arbitrary memory pointers for absolute security.*
 
-## Quick Start (Web Dashboard)
-
-The recommended way to experience AEGIS is through the visual dashboard.
-
-1. **Start the API Backend**:
-   ```bash
-   pip install -r requirements.txt
-   python webapp/server.py
-   ```
-2. **Start the React Frontend** (in a new terminal):
-   ```bash
-   cd ui
-   npm install
-   npm start
-   ```
-3. Open `http://localhost:3000` to access the IDE, visualize ASTs, step through bytecode, and observe trust scores accumulating in real-time.
-
-## Project Structure
-* `aegis/lexer/` & `parser/` - Grammar and Syntax parsing.
-* `aegis/interpreter/` - Secure Sandboxed evaluator.
-* `aegis/runtime/` & `trust/` - Security monitors and score keepers.
-* `aegis/ir/` & `vm/` - Three Address Code (TAC) and Bytecode virtual machine.
-* `webapp/` & `ui/` - React interface and Flask REST backend.
-
-> For comprehensive design details, theoretical frameworks, and academic specifics, refer to [AEGIS_Documentation.md](AEGIS_Documentation.md).
+Executing this code demonstrates the trust growth cycle. Invoking iterations consecutively transitions the top status indicator from the restricted `INTERPRETER` mode to the accelerated `OPTIMIZED` mode once telemetry vectors are validated.

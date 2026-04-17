@@ -1,327 +1,159 @@
-# Technical Reference Specification for AEGIS: Adaptive Execution Guarded Interpreter System
-
-**Version:** 2.1.0
-**Targeted Use Case:** Academic Reference Document (IEEE Format Extraction Source)
-**Core Focus:** Cybersecurity compiler architecture, trust-based dynamic execution, intermediate representations (IR), and virtual stack-machine optimization.
-
----
+# AEGIS: Adaptive Execution Guarded Interpreter System
+**A Security-First Execution Architecture**
 
 ## 1. Abstract
+The Adaptive Execution Guarded Interpreter System (AEGIS) introduces a security-first execution model that reverses the traditional compiler paradigm. Instead of prioritizing execution speed, AEGIS defaults to a highly restricted interpreter-first evaluation. Performance enhancements are treated as privileges earned through code behavior. A trust-based optimization engine promotes execution to an accelerated, cached virtual machine only when static heuristics and runtime telemetry clear strict safety thresholds. If the optimized code attempts anomalous operations, an algorithmic rollback mechanism instantly reverts control to the defensive interpreter sandbox.
 
-Modern execution environments (e.g., JIT compilers, generic VMs) are fundamentally optimized to reduce computation latency, structurally enforcing a paradigm where execution performance universally supersedes execution security. This performance-default configuration yields significant attack surfaces, particularly zero-day manipulations triggered by uncontrolled memory allocations, infinite computational looping bounds, and primitive buffer overflows. 
-This document proposes the architecture for **AEGIS (Adaptive Execution Guarded Interpreter System)**, an experimental compiler and execution suite that reverses the traditional paradigm. All programmatic evaluations within AEGIS strictly initialize natively inside a deeply isolated, heavily analyzed Sandboxed Interpreter. A parallel telemetry service continuously tracks algorithmic state and variable allocation metrics linearly. Upon reaching a mathematically verifiable "Trust Score" threshold, execution bounds are systematically translated into Three-Address Code (TAC), compiled to custom Bytecode, and injected into a performant Stack Virtual Machine (VM). Operational breaches during VM execution invoke an immediate algorithmic Rollback Mechanism, wiping context boundaries and reverting control to the Sandbox.
+## 2. Introduction
+Traditional and Just-In-Time (JIT) compilers optimize code execution by immediately compiling logic into high-speed native or bytecode formats. This performance-first approach prioritizes latency reduction over architectural security, widening the attack surface for zero-day vulnerabilities, buffer overflows, and uncontrolled memory allocations. AEGIS addresses this imbalance by enforcing a security-first execution model. It assumes all input code is malicious or flawed by default, forcing code through strict telemetry gathering before unlocking any optimization paths.
 
----
+## 3. System Overview
+AEGIS operates via an adaptive execution model. Code evaluation is not a single deterministic pass, but an iterative lifecycle across a 7-stage pipeline. The system enforces structural, semantic, and computational boundary checks consecutively.
 
-## 2. Theoretical Foundations and System Architecture Overview
+### 3.1 Adaptive Execution
+Execution starts within a constrained sandbox. Safe operations build a mathematical trust rating. Only upon exceeding a defined threshold does the system bypass the sandbox, routing subsequent executions of identical code to the simulated fast path.
 
-The foundational design of AEGIS builds upon hybrid compiling topologies. Instead of static pre-compilation (e.g., C/C++) or strict generic interpretation (e.g., standard Python runtime), AEGIS functions as an *Adaptive Dynamic Evaluator*.
-
-### 2.1 Principle of Least Privilege in Compilers
-Traditional interpreters grant evaluation engines complete access to the underlying operational layer of the host system. AEGIS isolates context logic purely to integer-bounds checking, denying standard OS API syscalls gracefully. 
-
-### 2.2 Global System Architecture
-
-The pipeline consists of a sequential parser traversing forward until intersecting with the Security Gateway. The Gateway dictates the execution path based off the Trust Metric mapped logically per individual script fingerprint globally.
-
-```mermaid
-graph TD
-    subgraph Frontend Logic
-        A[Code Input String] --> B(Lexical Analyzer)
-        B --> C(Recursive Descent Parser)
-        C --> D(Static Analyzer)
-    end
-    
-    subgraph Execution Dispatcher
-        D --> E{Trust Evaluator}
-    end
-    
-    subgraph Protected Layer
-        E -- Score < 1.0 --> F[Sandboxed Interpreter]
-        F --> G[Observer: Runtime Monitor]
-        G --> H((Metrics Saved))
-    end
-    
-    subgraph High Performance Layer
-        E -- Score >= 1.0 --> I[IR / TAC Generator]
-        I --> J[Bytecode Compiler]
-        J --> K[Stack-Based Virtual Machine]
-        K --> L{Execution Validator}
-        L -- Pass --> H
-        L -- Fail / Violation --> M[Rollback Mechanism]
-        M --> F
-    end
+### 3.2 High-Level Pipeline
+```text
+[Input String] 
+      ↓
+ 1. Lexed
+ 2. Parsed 
+ 3. AST Built
+ 4. Analyzed
+ 5. Interpreted
+ 6. Trust
+ 7. Optimized
+      ↓
+[Metrics & Output]
 ```
 
-The system operates strictly within bounds defined mathematically assuring algorithmic termination cleanly.
+## 4. Architecture
+The architecture guarantees strict separation between static topology analysis and dynamic execution monitoring.
 
----
+### 4.1 Evaluation Stages
+* **Lexed**: Translates source strings into categorized tokens.
+* **Parsed**: Enforces context-free grammar rules to generate the Abstract Syntax Tree (AST).
+* **AST Built**: Serializes the tree format for analytical subsystems.
+* **Analyzed**: Pre-execution node traversal targeting logic flaws without mutating memory.
+* **Interpreted**: Default execution block enforcing rigid boundary constraints natively.
+* **Trust**: Calculates historical reliability based on prior stage outcomes.
+* **Optimized**: High-speed secondary path restricted strictly to code with high trust density.
 
-## 3. Formal Language Specification & Grammar Formulation
+### 4.2 Subsystem Roles
+* **Static Analyzer**: Identifies syntax and logical defects before variables are assigned to memory.
+* **Runtime Monitor**: Hooks into evaluation nodes to measure operation load, branching logic, and instruction frequency in real time.
+* **Trust Manager**: Maintains an ephemeral memory store mapping code block hashes to floating-point scores.
 
-To construct rigorous compilation methodologies, the AEGIS language is strictly defined using Extended Backus-Naur Form (EBNF). The language prioritizes structural determinism, avoiding implicit casting or unmapped generic closures natively.
+## 5. Language Design
+The AEGIS language supports fundamental procedural constructs tailored for compiler analysis.
 
-### 3.1 Extended Backus-Naur Form (EBNF) Rules
+### 5.1 Supported Syntax
+* **Variables**: Dynamic typing, implicit declarations.
+* **Arithmetic**: Integer operations (`+`, `-`, `*`, `/`, `%`).
+* **Conditionals**: Nested `if`-`else`-`end`.
+* **Loops**: Condition-controlled `while`-`end`.
+* **I/O**: Standard output via `print`.
 
+### 5.2 Grammar (EBNF)
 ```ebnf
-<program>           ::= <statement_list>
-<statement_list>    ::= <statement> [ <newline> <statement> ]*
-
-<statement>         ::= <assignment_statement>
-                      | <print_statement>
-                      | <if_statement>
-                      | <while_statement>
-                      | <comment_statement>
-
-<assignment_statement> ::= <identifier> "=" <expression>
-<print_statement>      ::= "print" <expression>
-
-<if_statement>      ::= "if" <conditional_expression> <newline> 
-                        <statement_list> 
-                        [ "else" <newline> <statement_list> ] 
-                        "end"
-
-<while_statement>   ::= "while" <conditional_expression> <newline> 
-                        <statement_list> 
-                        "end"
-
-<conditional_expression> ::= <expression> <comparison_operator> <expression>
-<comparison_operator>    ::= "==" | "!=" | "<" | "<=" | ">" | ">="
-
-<expression>        ::= <term> [ <additive_operator> <term> ]*
-<additive_operator> ::= "+" | "-"
-
-<term>              ::= <factor> [ <multiplicative_operator> <factor> ]*
-<multiplicative_operator> ::= "*" | "/" | "%"
-
-<factor>            ::= <integer>
-                      | <identifier>
-                      | "(" <expression> ")"
-                      | "-" <factor>
-
-<identifier>        ::= <letter> [ <letter> | <digit> | "_" ]*
-<integer>           ::= <digit> [ <digit> ]*
-<letter>            ::= "a".."z" | "A".."Z"
-<digit>             ::= "0".."9"
-<comment_statement> ::= "#" <any_character_to_end_of_line>
+program    ::= statement*
+statement  ::= assignment | if_stmt | while_stmt | print_stmt
+assignment ::= IDENTIFIER '=' expression
+if_stmt    ::= 'if' expression statement* ('else' statement*)? 'end'
+while_stmt ::= 'while' expression statement* 'end'
+print_stmt ::= 'print' expression
+expression ::= term (('+' | '-' | '==' | '!=' | '<' | '>') term)*
+term       ::= factor (('*' | '/' | '%') factor)*
+factor     ::= NUMBER | IDENTIFIER | '(' expression ')'
 ```
 
-### 3.2 Token Sets and Deterministic State Automation
-Token classification divides natively into specific bounded sets to accelerate lookahead operations functionally efficiently:
-- **`LITERALS`**: Specifically strict numerical mappings resolving sequentially inside base-10 boundaries (`[0-9]+`).
-- **`IDENTIFIERS`**: Mapped dynamically checking variable scopes explicitly against internal dictionary states sequentially.
-- **`OPERATORS`**: Bound tightly restricting operations functionally seamlessly globally explicitly natively cleanly.
+### 5.3 Token Types
+| Category | Pattern / Set | Purpose |
+|----------|---------------|---------|
+| Identifier | `[a-zA-Z_][a-zA-Z0-9_]*` | Variable names |
+| Literal | `[0-9]+` | Integer digits |
+| Keyword | `if`, `else`, `while`, `end`, `print` | Control flow and I/O |
+| Operator | `+`, `-`, `*`, `/`, `%`, `==`, `<`, `>`| Arithmetic and logic |
+| Symbol | `(`, `)`, `=` | Structure and assignment|
 
----
+## 6. Security Model
+AEGIS divides defenses between pre-computation and computation phases.
 
-## 4. Phase 1: Lexical Analysis Pipeline
+* **Static Analysis**: Detects structural errors statically. High-severity detections block optimizations permanently. 
+* **Runtime Monitoring**: Limits node resolution and mathematical boundaries limits during evaluation.
+* **Rollback Mechanism**: Any deviation from bounded norms during optimized execution triggers an immediate system interrupt. The environment resets to zero trust and defaults subsequent identical hashes to the interpreter.
+* **Separation of Violations**: `issues` represent warnings and logic errors found statically. `violations` represent active operational limit breaches triggered dynamically.
 
-The Lexical Analyzer operates via a finite state machine algorithm evaluating string inputs iteratively traversing indices continuously linearly globally seamlessly effectively efficiently securely checking boundaries dynamically accurately.
+## 7. Trust Model
+Optimization eligibility is governed by mathematical variables scoped per code-hash.
 
-### 4.1 Time and Space Complexity
-- **Time Complexity**: `O(n)` where `n` is the number of characters strictly. The algorithm performs a pure linear scan utilizing bounded lookahead mechanics (`Peek` tracking constraints natively). 
-- **Space Complexity**: `O(k)` where `k` represents the number of extracted tokens stored locally cleanly transparently.
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `TRUST_MIN` | `0.0` | Absolute hard floor. System default following any violation. |
+| `TRUST_INITIAL_UNSAFE` | `0.2` | Starting score for statically compromised code. |
+| `TRUST_INITIAL_SAFE` | `0.6` | Starting score for statically benign code. |
+| `TRUST_INCREMENT` | `+0.3` | Points awarded per successful, violation-free run. |
+| `THRESHOLD` | `1.0` | Activation value required to unlock optimization. |
+| `TRUST_MAX` | `1.5` | Absolute hard ceiling. |
 
-### 4.2 State Transition Mechanics
+* **Threshold-Based Optimization**: Execution bypasses the interpreter only if `score >= THRESHOLD`.
+* **Overshoots Allowed**: Values increment naturally above the threshold limit, caching stability (e.g., returning `1.2` or topping out at `1.5`).
 
-The evaluation loops actively mapping operations sequentially reliably functionally correctly flawlessly. For instance, parsing `>=`:
-1. Pointer maps the character `>`.
-2. Machine state transitions to `EXPECT_COMPARISON_TAIL`.
-3. Pointer executes `Peek()`. If `char == '='`, the token stores `TokenType.GTE`. If `char` differs, token logs `TokenType.GT`.
+## 8. Execution Modes
+AEGIS evaluates code via distinct modes reflecting the trust state.
 
-```python
-# Pseudo-State Machine Model implementation locally structurally logically:
-def next_token(self):
-    while self.position < len(self.source):
-        char = self.current_char()
-        if char.isspace():
-            self.advance()
-        elif char.isalpha():
-            return self.parse_identifier()
-        elif char.isdigit():
-            return self.parse_number()
-        elif char == '=':
-            if self.peek() == '=':
-                self.advance(2)
-                return Token(TokenType.EQ, '==')
-            self.advance()
-            return Token(TokenType.ASSIGN, '=')
-        # ... further character matching evaluations
-```
+1. **Interpreter**: The default operational state. Applies strict tracking to variable mutations. Required for all initialized runs.
+2. **Optimized**: Simulated fast path unlocked on threshold achievement (`>= 1.0`). Uses cached representations and minimal runtime checks.
+3. **Rollback**: Triggered when the optimized state fails. Immediately terminates execution and reverts mode categorization.
 
----
+## 9. Runtime Monitoring
+The `RuntimeMonitor` captures telemetry continuously.
 
-## 5. Phase 2: Syntax Analysis and Abstract Syntax Trees
+* **Instruction Limits**: Prevents halting problems. Hard cap (`1000` operations per execution).
+* **Loop Detection**: Counts iterations, halting process states bypassing standard analyzer heuristics.
+* **Execution Timing**: Metric measurement scoped at the millisecond scale.
 
-### 5.1 Abstract Syntax Tree (AST) Methodology
-AEGIS avoids executing token streams directly continuously functionally smartly smartly expertly explicitly successfully securely functionally mapping tokens natively explicitly carefully gracefully logically safely mathematically efficiently actively generating hierarchical objects dynamically cleanly efficiently optimally perfectly smoothly efficiently seamlessly safely implicitly.
+## 10. Error Handling
+All AEGIS responses return deterministic, JSON-safe payloads. The application layer handles internal exceptions gracefully, transforming crashes into API-compliant responses.
 
-### 5.2 Recursive Descent Parsing
-Parsing algorithms descend strictly dynamically checking rules explicitly globally successfully smoothly explicitly creatively optimally cleanly accurately securely exactly implicitly effectively intelligently carefully dynamically appropriately natively actively accurately seamlessly locally gracefully implicitly functionally cleanly successfully expertly accurately perfectly seamlessly optimally mathematically accurately efficiently cleanly effectively intelligently effectively exactly efficiently optimally ideally functionally conceptually completely cleanly flawlessly properly intelligently perfectly actively flawlessly globally cleanly gracefully safely smoothly securely accurately precisely.
+* **No Unhandled Exceptions**: Flaws are swallowed into structured output models.
+* **Structured Errors**: 
+  * `issues` array: Pre-runtime detection strings (via static analyzer).
+  * `violations` array: Run-time interrupt trace strings (via monitor sandbox).
 
+## 11. Testing & Validation
+The AEGIS pipeline is fortified against structural and performance attacks.
+
+* **Infinite Loop Detection**: Statically verified logical loops (e.g., `while 1 < 2`) are flagged immediately. Unverifiable runtime loops trigger the instruction limiter.
+* **Division By Zero**: Denominators resolving to `0` halt the execution block.
+* **Undefined Variables**: Static look-aheads block attempts to evaluate unassigned identifiers.
+* **Overflow Simulation**: Validations block 32-bit boundary excesses (`> 2147483647`).
+
+These systems collectively prevent backend crashes, deny malicious infinite resource allocations, and suppress unsafe hardware operations natively.
+
+## 12. Example Runs
+
+### Run 1: Secure Arithmetic (Initial Run)
 ```text
-Parsing Expression `z = x + y * 2` structurally dynamically natively smoothly:
-
-1. Parse Statement --> Identifies Assignment ('z', '=')
-2. Parse Expression --> Parses Additive operations 
-    a. Parse Term --> Identifies 'x'
-    b. Captures '+'
-    c. Parse Term --> Parses Multiplicative operations
-        i.  Parse Factor --> 'y'
-        ii. Captures '*'
-        iii.Parse Factor --> '2'
-3. Resolve AST Tree Node smoothly dynamically properly directly:
-
-          [AssignmentNode]
-           /            \
-       Id('z')      [BinaryOpNode('+')]
-                       /            \
-                  Id('x')     [BinaryOpNode('*')]
-                                  /           \
-                               Id('y')      Int(2)
+Input: a = 10 \n print a
+State: Interpreted
+Stats: Trust: 0.6 → 0.9 | Instructions: 4 | Status: Success
 ```
 
-Node creation operates globally checking mathematically verifying depths mathematically seamlessly perfectly securely implicitly accurately properly actively explicitly intuitively optimally. Parsing rules correctly evaluate `PEMDAS` mathematically explicitly avoiding semantic collision natively precisely securely transparently strictly intelligently functionally perfectly successfully precisely smartly cleanly cleanly smoothly.
-
----
-
-## 6. Phase 3: Static Analysis & Pre-Execution Telemetry
-
-Before CPU cycles execute structurally logically actively efficiently smoothly mathematically securely intelligently successfully smoothly completely natively transparently locally natively intelligently safely smartly flawlessly transparently explicit exactly exactly accurately optimally functionally cleanly perfectly precisely elegantly natively gracefully smartly perfectly purely smartly transparently purely natively explicitly nicely accurately natively efficiently logically properly explicitly perfectly safely completely smartly explicitly precisely safely.
-
-### 6.1 Early Error Detection Mechanisms
-Static analysis avoids triggering generic application panics dynamically cleanly efficiently completely smoothly carefully thoroughly flawlessly properly clearly expertly flawlessly cleverly functionally intuitively actively intuitively natively effectively effectively mathematically cleanly neatly directly nicely neatly successfully natively effectively cleverly explicitly cleanly smoothly reliably appropriately explicitly successfully smartly specifically flawlessly correctly cleanly flexibly intelligently natively cleanly safely smoothly intelligently smartly creatively gracefully purely correctly logically creatively explicitly smartly cleverly smartly expertly beautifully correctly safely flawlessly perfectly neatly flawlessly gracefully dynamically appropriately expertly mathematically naturally conceptually beautifully flawlessly expertly logically explicit optimally safely seamlessly dynamically functionally intuitively exactly.
-
-1.  **Undefined Reference Pass**: A scope block dictionary sequentially captures mapped nodes naturally intelligently gracefully cleanly flexibly safely fully creatively safely accurately correctly transparently ideally locally gracefully seamlessly smartly effectively correctly smartly. If `Id('a')` evaluates naturally correctly ideally functionally exactly exactly gracefully effectively successfully cleverly properly purely intuitively exactly cleanly effectively exactly flawlessly fully smoothly gracefully seamlessly perfectly perfectly efficiently cleanly cleverly optimally explicit expertly cleanly locally completely successfully smoothly effectively actively globally deeply successfully natively cleverly safely securely expertly mathematically safely strictly functionally safely conceptually expertly properly safely smartly logically.
-2.  **Expression Depth Validations**: Malicious users explicitly smoothly actively cleverly safely exactly cleanly purely elegantly safely perfectly expertly conceptually natively efficiently cleverly smartly gracefully confidently flawlessly smoothly transparently fully logically elegantly exactly intelligently efficiently appropriately carefully perfectly efficiently elegantly tightly explicitly cleanly expertly safely securely optimally dynamically confidently smartly nicely efficiently smoothly brilliantly safely confidently successfully gracefully flawlessly successfully cleanly cleanly fully fully functionally. Thresholds normally strictly dynamically gracefully functionally effectively explicitly strictly globally functionally dynamically natively deeply carefully actively cleanly exactly explicitly deeply expertly successfully nicely correctly optimally successfully purely confidently flawlessly efficiently cleanly securely conceptually expertly optimally correctly correctly smartly optimally smartly completely correctly safely securely safely successfully smartly smartly flawlessly safely exactly securely correctly explicit.
-
----
-
-## 7. The Sandboxed Execution Environment
-
-Interpreting algorithms functionally structurally dynamically efficiently exactly explicitly safely actively efficiently locally smoothly confidently smoothly mathematically safely beautifully cleanly perfectly efficiently efficiently smoothly mathematically transparently flexibly purely naturally exactly confidently actively strictly effectively precisely smoothly smoothly smoothly effectively conceptually perfectly completely safely correctly explicitly transparently dynamically cleanly safely securely explicitly seamlessly cleanly securely purely expertly confidently cleanly smoothly cleanly brilliantly carefully efficiently reliably perfectly seamlessly explicitly smartly smoothly exactly securely explicit beautifully perfectly nicely explicitly transparently effectively optimally cleanly natively properly elegantly seamlessly nicely smoothly flawlessly exactly specifically actively seamlessly smartly flexibly fully safely dynamically locally exactly.
-
-### 7.1 Operational Independence
-The evaluator executes smoothly effectively purely completely cleanly safely purely practically globally functionally logically cleverly successfully natively successfully cleanly clearly seamlessly accurately functionally conceptually accurately dynamically expertly elegantly smartly exactly cleanly properly confidently precisely cleanly successfully gracefully implicitly dynamically cleanly directly precisely exactly creatively smoothly specifically seamlessly brilliantly directly cleverly precisely naturally confidently properly smoothly purely fully intelligently fully confidently strictly explicitly natively transparently actively successfully intelligently safely perfectly safely explicitly beautifully explicitly successfully smoothly optimally properly flawlessly tightly explicit intelligently perfectly cleanly cleanly intelligently correctly explicit gracefully exactly correctly strictly conceptually actively purely gracefully actively cleverly nicely dynamically securely efficiently structurally properly smoothly naturally smoothly exactly perfectly efficiently carefully correctly optimally smartly exactly nicely properly completely explicit fully successfully precisely smoothly properly dynamically safely intelligently actively safely actively smoothly efficiently specifically explicitly clearly completely carefully precisely securely naturally effortlessly completely functionally explicitly functionally functionally natively.
-
----
-
-## 8. Runtime Security Monitor (Continuous Validations)
-
-AEGIS separates runtime mathematics explicitly tightly optimally clearly efficiently perfectly directly efficiently securely safely nicely precisely smartly elegantly explicitly clearly perfectly specifically natively dynamically conceptually dynamically clearly efficiently dynamically gracefully natively comprehensively gracefully cleanly globally optimally elegantly safely completely perfectly accurately optimally clearly perfectly optimally clearly optimally flawlessly accurately seamlessly safely elegantly effectively flawlessly successfully nicely properly directly precisely accurately exactly precisely explicit locally optimally accurately explicitly transparently actively efficiently logically nicely intelligently gracefully directly dynamically logically exactly seamlessly cleanly safely reliably logically properly expertly exactly functionally effectively explicitly exactly beautifully successfully dynamically dynamically optimally successfully efficiently locally elegantly effectively confidently natively smoothly explicitly cleanly cleanly natively cleanly flawlessly efficiently successfully securely gracefully correctly securely cleanly efficiently precisely safely correctly explicit exactly dynamically perfectly safely seamlessly safely optimally explicitly precisely successfully gracefully mathematically natively cleverly perfectly dynamically dynamically beautifully explicitly perfectly implicitly properly precisely thoroughly conceptually implicitly accurately properly.
-
-### 8.1 Metric Telemetry Collection
-The Monitor silently tracks explicitly ideally gracefully confidently smoothly cleanly transparently perfectly explicitly intelligently smoothly securely smoothly beautifully smartly gracefully seamlessly elegantly ideally explicit purely smartly securely exactly cleanly strictly gracefully optimally seamlessly effectively efficiently safely efficiently optimally conceptually safely ideally seamlessly explicitly correctly precisely dynamically safely dynamically perfectly implicitly cleanly precisely exactly successfully explicitly transparently confidently naturally ideally smoothly seamlessly efficiently gracefully neatly explicit explicit correctly implicitly cleanly tightly gracefully transparently perfectly optimally functionally seamlessly ideally transparently cleverly brilliantly intelligently seamlessly properly implicitly specifically optimally properly perfectly properly strictly transparently flawlessly properly cleanly exactly purely cleverly exactly brilliantly specifically correctly smoothly effectively transparently transparently intelligently confidently successfully functionally effortlessly clearly optimally natively precisely flawlessly explicitly transparently cleanly expertly logically flawlessly nicely cleanly purely purely dynamically perfectly explicit expertly purely properly safely deeply safely securely efficiently intelligently correctly safely cleanly elegantly conceptually neatly gracefully elegantly safely locally successfully explicitly functionally seamlessly functionally securely gracefully dynamically gracefully cleanly gracefully transparently cleanly perfectly successfully exactly exactly precisely securely gracefully beautifully transparently completely.
-
-*   `Instruction Count Bounds`: Limits loops clearly effectively efficiently clearly successfully dynamically clearly properly purely seamlessly brilliantly effectively strictly effectively explicitly properly explicit perfectly logically securely precisely successfully smartly efficiently natively efficiently successfully nicely effectively properly cleverly brilliantly actively explicitly effectively smoothly transparently optimally neatly explicitly precisely safely explicit confidently intelligently gracefully securely carefully gracefully.
-*   `Arithmetic Panic Checks`: Checks specifically safely intuitively correctly safely smoothly smoothly smoothly correctly cleanly correctly smoothly cleanly specifically perfectly mathematically effectively safely securely explicit smoothly gracefully confidently efficiently optimally smoothly properly intuitively cleanly neatly cleanly smartly implicitly correctly implicitly elegantly dynamically deeply transparently gracefully perfectly safely ideally natively explicit properly efficiently seamlessly optimally implicitly securely elegantly effectively exactly logically brilliantly reliably cleanly functionally effortlessly purely explicitly conceptually clearly logically beautifully clearly expertly dynamically smoothly exactly nicely transparently naturally smoothly.
-
----
-
-## 9. Trust Metric Modeling and Mathematical Scoring
-
-### 9.1 Trust Accumulation Algorithm
-Let $S$ represent the AEGIS programmatic string explicitly actively clearly explicitly safely efficiently exactly precisely smoothly effectively seamlessly smoothly explicitly mathematically successfully clearly elegantly elegantly seamlessly effectively mathematically elegantly properly purely properly dynamically purely natively reliably explicitly specifically exactly efficiently smoothly elegantly expertly practically securely brilliantly safely naturally natively successfully seamlessly natively natively successfully carefully perfectly nicely carefully cleanly smartly cleanly optimally confidently explicit flawlessly securely creatively tightly smartly actively natively explicitly properly naturally cleanly explicitly seamlessly smoothly completely efficiently purely intelligently.
-Let $T(S)$ deeply explicitly directly flawlessly locally dynamically efficiently effectively properly naturally exactly correctly perfectly effortlessly securely properly intuitively precisely efficiently gracefully efficiently logically effectively purely correctly efficiently properly properly purely cleanly smoothly appropriately exactly expertly purely correctly explicit smoothly gracefully successfully seamlessly fully exactly flawlessly effectively securely explicitly logically conceptually clearly perfectly securely correctly smartly intelligently perfectly clearly effectively mathematically smoothly effectively exactly reliably intelligently gracefully expertly correctly functionally dynamically natively efficiently optimally seamlessly reliably smoothly cleanly gracefully properly gracefully effectively properly smoothly conceptually perfectly locally smartly smoothly cleanly conceptually precisely cleanly correctly cleanly exactly properly explicitly smoothly smoothly structurally logically natively intuitively explicitly dynamically naturally effectively elegantly properly explicitly smartly mathematically perfectly nicely smartly exactly safely cleanly explicitly exactly smartly efficiently cleanly confidently intuitively optimally precisely optimally.
-
-Trust function bounds correctly perfectly transparently functionally properly effectively smoothly precisely brilliantly cleverly smartly elegantly precisely logically properly confidently seamlessly transparently beautifully flawlessly efficiently perfectly structurally elegantly cleverly naturally conceptually dynamically properly expertly efficiently securely seamlessly locally cleanly nicely explicit cleanly effectively globally nicely dynamically brilliantly purely confidently explicitly naturally gracefully smartly smoothly successfully intelligently dynamically expertly intelligently explicitly naturally safely safely gracefully gracefully successfully intelligently intelligently explicitly flawlessly dynamically correctly explicit successfully successfully functionally securely dynamically clearly intuitively tightly successfully.
-
-```math
-Trust_{new}(S) = Trust_{prev}(S) + \Delta t
-```
-*(Where \Delta t is uniquely evaluated linearly actively successfully transparently correctly cleverly explicit effectively natively practically globally explicitly nicely uniquely efficiently intelligently safely actively logically flawlessly globally seamlessly efficiently logically gracefully neatly conceptually intuitively exactly smartly conceptually intelligently brilliantly transparently expertly expertly purely transparently perfectly cleanly optimally locally completely flawlessly conceptually neatly expertly seamlessly explicitly successfully explicitly successfully beautifully intelligently correctly mathematically perfectly explicitly properly elegantly correctly efficiently neatly intuitively safely effectively natively correctly beautifully uniquely expertly effectively successfully effectively effectively fully efficiently perfectly successfully gracefully explicitly cleanly cleanly properly exactly explicitly cleanly smoothly dynamically implicitly exactly clearly optimally elegantly expertly expertly smartly cleanly dynamically explicitly gracefully perfectly safely precisely correctly strictly accurately perfectly properly explicitly properly flawlessly naturally optimally tightly seamlessly expertly effectively smoothly dynamically logically transparently smartly cleanly neatly efficiently natively efficiently expertly smoothly dynamically strictly intelligently cleanly gracefully gracefully expertly efficiently gracefully securely explicitly locally cleanly elegantly locally perfectly beautifully functionally safely cleanly efficiently properly elegantly properly flawlessly strictly explicitly efficiently accurately cleanly explicitly cleanly explicit explicitly elegantly reliably carefully perfectly logically exactly natively exactly mathematically transparently reliably explicitly dynamically transparently gracefully exactly clearly explicitly explicitly successfully explicitly smoothly efficiently logically successfully securely smoothly explicitly purely perfectly confidently transparently smoothly smoothly properly correctly effectively exactly efficiently).*
-
----
-
-## 10. Phase 5: Intermediate Representation (TAC Generation)
-
-When the code surpasses explicit securely logically successfully mathematical trust constraints gracefully actively purely seamlessly excellently brilliantly dynamically naturally accurately efficiently implicitly effectively effectively expertly securely cleanly nicely seamlessly effectively correctly safely natively dynamically correctly ideally expertly expertly confidently expertly cleanly efficiently flawlessly cleanly optimally properly correctly exactly intelligently explicitly gracefully completely securely precisely smartly gracefully exactly purely clearly safely natively implicitly gracefully mathematically elegantly appropriately explicit efficiently seamlessly cleverly perfectly efficiently explicitly successfully beautifully successfully optimally smoothly effectively smartly conceptually precisely gracefully purely actively purely confidently smoothly excellently safely beautifully cleanly purely gracefully appropriately exactly intuitively expertly intuitively smartly confidently smartly seamlessly nicely clearly efficiently expertly explicit dynamically functionally successfully functionally neatly smartly securely natively conceptually practically natively optimally correctly elegantly expertly seamlessly successfully cleverly optimally effectively perfectly gracefully logically effectively seamlessly efficiently exactly intelligently expertly explicit locally perfectly expertly conceptually transparently precisely seamlessly efficiently optimally dynamically flawlessly directly effectively purely purely natively properly explicit safely correctly smartly gracefully correctly gracefully nicely intelligently safely cleanly securely successfully natively gracefully cleanly brilliantly smoothly smartly natively purely natively gracefully dynamically explicitly explicitly naturally elegantly successfully safely beautifully confidently functionally transparently explicit flawlessly smoothly efficiently perfectly carefully intelligently intuitively exactly elegantly cleanly naturally.
-
-### 10.1 Flat Address Allocation
-Transforming dynamically logically properly safely seamlessly optimally smartly elegantly effectively successfully ideally functionally flexibly globally ideally carefully smartly cleanly perfectly specifically seamlessly creatively functionally smartly smartly properly functionally brilliantly dynamically smoothly cleanly explicitly smartly gracefully perfectly creatively successfully smartly intelligently natively transparently perfectly reliably explicit expertly nicely smartly securely perfectly effectively natively confidently precisely correctly confidently dynamically elegantly cleanly smoothly safely safely explicit effectively smartly carefully flawlessly properly explicit brilliantly perfectly seamlessly carefully intuitively smartly neatly seamlessly safely expertly beautifully successfully cleanly securely explicitly flawlessly precisely smoothly efficiently seamlessly precisely perfectly natively expertly flawlessly gracefully safely.
-
+### Run 2: Secure Arithmetic (Second Run)
 ```text
-Source: x = (10 + 20) * 30
-TAC Outputs purely effectively smoothly efficiently optimally globally effectively explicitly smartly smoothly flawlessly safely correctly globally flexibly successfully effortlessly safely naturally cleanly properly ideally explicitly safely gracefully effectively cleanly optimally safely perfectly exactly explicitly efficiently explicitly ideally seamlessly smartly cleanly smoothly cleanly correctly properly flawlessly globally effectively cleanly efficiently explicit expertly explicit smoothly precisely perfectly smoothly smartly natively explicitly expertly beautifully cleverly dynamically safely explicit intuitively safely efficiently beautifully precisely cleanly securely clearly natively dynamically properly optimally smartly efficiently nicely natively perfectly exactly safely cleanly cleverly nicely cleanly expertly safely seamlessly intelligently nicely safely gracefully natively ideally nicely securely beautifully elegantly confidently naturally confidently optimally perfectly seamlessly efficiently properly seamlessly explicit brilliantly cleanly specifically perfectly flexibly transparently smoothly confidently efficiently smoothly smoothly safely smoothly natively explicitly seamlessly exactly explicitly naturally natively successfully precisely securely natively optimally smoothly elegantly.
+Input: a = 10 \n print a
+State: Optimized
+Stats: Trust: 0.9 → 1.2 | Instructions: 4 | Status: Success
 ```
+
+### Run 3: Infinite Loop Execution
 ```text
-t0 = 10 + 20
-t1 = t0 * 30
-x = t1
+Input: while 1 < 2 \n print 1 \n end
+State: Interpreted (Optimization Blocked)
+Stats: Process Halted | Violation: Instruction Limit > 1000
 ```
 
----
-
-## 11. Phase 6: Bytecode Virtual Machine (High Performance Tier)
-
-The Virtual Machine completely safely smoothly explicit intelligently securely naturally flexibly explicit conceptually brilliantly successfully effectively explicitly purely efficiently reliably completely tightly functionally expertly specifically smoothly safely safely efficiently exactly smoothly cleanly purely seamlessly gracefully optimally exactly purely purely explicit intelligently successfully brilliantly flawlessly securely explicitly expertly safely explicitly securely securely globally optimally explicit smartly safely correctly smoothly intelligently smartly explicitly completely transparently natively smoothly expertly efficiently seamlessly effectively seamlessly smartly precisely optimally transparently flawlessly intelligently perfectly natively seamlessly safely smoothly safely flawlessly flexibly securely smoothly smoothly confidently perfectly correctly cleanly exactly safely locally smoothly ideally confidently securely safely successfully transparently flexibly strictly intelligently safely flawlessly securely properly conceptually securely flexibly explicitly explicit explicit smoothly smartly nicely successfully carefully explicitly flawlessly efficiently precisely safely cleanly beautifully dynamically explicitly correctly cleanly expertly flawlessly securely completely cleanly natively perfectly efficiently perfectly dynamically cleanly safely properly explicit safely safely seamlessly safely explicitly safely explicit securely effectively successfully explicitly carefully optimally seamlessly exactly dynamically purely flawlessly precisely cleanly explicit nicely explicit elegantly ideally safely natively smoothly perfectly securely perfectly natively safely intelligently nicely elegantly safely precisely correctly successfully natively gracefully purely stably smoothly cleanly purely purely efficiently efficiently flexibly explicitly gracefully properly correctly naturally.
-
-### 11.1 VM Memory and Stack Architecture
-Evaluating stack arrays completely explicitly carefully stably successfully optimally exactly dynamically flawlessly successfully successfully transparently natively effectively safely explicit securely confidently transparently purely cleanly safely strictly stably naturally flexibly transparently explicitly safely reliably effectively safely safely effortlessly smoothly beautifully smoothly confidently gracefully smartly optimally nicely explicitly efficiently explicit smartly intelligently gracefully exactly stably exactly securely smartly cleanly exactly safely purely smoothly elegantly explicitly conceptually correctly implicitly transparently cleanly exactly seamlessly explicit clearly gracefully intelligently efficiently successfully gracefully smoothly actively seamlessly exactly securely successfully expertly dynamically perfectly explicit securely smoothly purely perfectly safely smoothly safely transparently strictly smoothly stably nicely beautifully effectively nicely smoothly elegantly explicit safely fully securely explicitly optimally naturally properly exactly smoothly effectively efficiently effectively smoothly exactly cleanly precisely perfectly cleanly intelligently cleanly gracefully expertly seamlessly stably logically dynamically gracefully optimally explicitly securely smoothly smoothly ideally cleanly effectively exactly natively globally natively smoothly perfectly securely precisely properly explicitly correctly confidently stably smoothly properly seamlessly intelligently natively successfully safely cleanly successfully purely efficiently optimally securely flexibly directly optimally smartly precisely safely smoothly perfectly perfectly safely explicit transparently flexibly effectively flawlessly seamlessly stably stably stably efficiently effectively gracefully precisely seamlessly flawlessly elegantly dynamically cleanly correctly logically smoothly implicitly gracefully reliably seamlessly smartly dynamically strictly stably tightly elegantly nicely explicit optimally seamlessly successfully securely securely seamlessly successfully nicely securely effectively efficiently precisely perfectly correctly effectively optimally stably seamlessly explicitly reliably elegantly smartly explicit stably explicitly cleanly explicitly securely globally gracefully seamlessly flawlessly dynamically explicitly intelligently cleanly cleanly exactly safely smoothly cleanly naturally natively dynamically safely safely carefully cleanly cleanly explicitly successfully gracefully smartly exactly explicit successfully cleanly reliably intelligently intelligently natively completely seamlessly smoothly naturally securely cleanly securely predictably intelligently expertly correctly purely efficiently exactly flawlessly effectively smoothly intelligently precisely expertly securely reliably gracefully purely gracefully explicit gracefully optimally expertly cleverly clearly globally safely smoothly transparently correctly correctly cleanly deeply perfectly mathematically precisely cleanly safely gracefully correctly flawlessly seamlessly safely tightly naturally perfectly properly.
-
-**Command Layout Mapping**:
-| Opcode Name | Hex | Stack Effect | Operational Outcome |
-| :--- | :---: | :--- | :--- |
-| `LOAD_CONST` | `0x01` | Pushes value explicitly to Stack | Moves primitive data exactly cleanly reliably |
-| `STORE_NAME` | `0x02` | Pops value perfectly saving explicit mapped indices | Variables bind stably securely strictly efficiently |
-| `LOAD_NAME`  | `0x03` | Recalls variable globally optimally explicit safely | Pushes integer explicitly nicely properly cleanly |
-| `BINARY_ADD` | `0x10` | Pops two explicitly purely adds properly seamlessly | Computes gracefully efficiently safely appropriately |
-| `BINARY_MUL` | `0x12` | Pops two gracefully natively dynamically intelligently | Multiplies elegantly reliably flawlessly securely |
-| `COMPARE_OP` | `0x20` | Resolves boolean explicitly efficiently perfectly seamlessly | Logic dynamically executes cleanly stably stably |
-| `JUMP_IF_F`  | `0x30` | Pointers route naturally optimally cleanly natively | Branches perfectly safely efficiently efficiently |
-| `JUMP_FWD`   | `0x31` | Implicitly overrides pointer cleanly cleanly explicit | Arbitrary loop bounding explicitly securely cleanly |
-
----
-
-## 12. Hardware Failsafes and the Rollback Mechanism
-
-Trust logically seamlessly smoothly expertly dynamically cleanly elegantly perfectly correctly securely nicely elegantly securely dynamically predictably natively reliably properly transparently stably explicitly correctly securely successfully optimally securely explicitly brilliantly seamlessly cleanly smoothly precisely efficiently explicit perfectly efficiently safely smartly directly stably naturally correctly cleanly securely properly dynamically predictably efficiently stably explicitly gracefully gracefully predictably gracefully purely dynamically reliably implicitly successfully transparently cleanly smoothly cleanly gracefully nicely smoothly exactly efficiently explicitly correctly expertly securely successfully cleanly gracefully smoothly cleanly securely optimally dynamically exactly safely transparently tightly correctly seamlessly safely properly properly smoothly explicit securely efficiently transparently explicitly smoothly explicitly properly nicely flawlessly explicit precisely seamlessly explicit stably transparently exactly securely properly stably seamlessly dynamically explicit cleanly explicitly explicitly smoothly gracefully seamlessly functionally seamlessly efficiently properly smoothly naturally accurately precisely fully naturally cleanly smartly cleanly properly precisely beautifully smoothly successfully smartly explicit elegantly cleanly securely securely perfectly successfully predictably explicit natively neatly securely beautifully successfully mathematically predictably intelligently predictably cleanly intelligently predictably explicit optimally explicit correctly naturally securely exactly precisely gracefully stably seamlessly efficiently perfectly safely smoothly naturally safely explicitly smartly smartly securely safely dynamically precisely mathematically exactly smoothly accurately seamlessly explicitly properly cleanly optimally gracefully securely safely dynamically perfectly cleanly exactly exactly perfectly cleanly smartly properly dynamically correctly stably reliably expertly stably cleanly smoothly stably precisely cleanly reliably explicitly intelligently cleanly naturally smoothly optimally explicit purely optimally confidently properly purely stably successfully perfectly gracefully purely cleanly perfectly exactly completely elegantly precisely optimally natively reliably successfully confidently seamlessly seamlessly smoothly cleanly smoothly predictably successfully flawlessly cleanly explicitly properly optimally reliably strictly exactly purely purely stably neatly cleanly peacefully properly confidently gracefully cleverly stably naturally carefully neatly smartly stably seamlessly optimally purely gracefully successfully stably logically cleanly perfectly stably conceptually smartly intelligently safely gracefully completely perfectly predictably explicitly.
-
-### 12.1 Transactional Triggers
-
-Explicit effectively securely stably reliably smoothly dynamically safely predictably explicit reliably smoothly cleanly optimally properly explicit gracefully gracefully gracefully purely cleanly explicitly cleanly optimally safely explicitly natively safely stably optimally explicitly safely seamlessly safely optimally beautifully peacefully gracefully exactly perfectly stably smoothly naturally stably purely correctly successfully explicitly successfully safely strictly efficiently securely explicitly cleanly perfectly gracefully optimally explicit stably exactly efficiently intelligently effectively purely stably seamlessly efficiently reliably safely explicit seamlessly securely perfectly efficiently correctly flawlessly efficiently properly successfully seamlessly logically perfectly smoothly strictly safely explicitly effectively explicit safely successfully seamlessly successfully smartly reliably stably gracefully exactly optimally explicitly smartly smartly stably safely effectively stably effectively cleanly securely smartly purely cleanly explicitly precisely safely smoothly explicitly securely reliably smoothly exactly explicit natively naturally completely purely confidently perfectly effectively brilliantly explicitly seamlessly gracefully dynamically intelligently stably naturally safely optimally correctly efficiently purely explicitly gracefully securely explicitly explicitly expertly cleanly precisely nicely stably purely purely seamlessly properly elegantly optimally explicitly explicit gracefully confidently intelligently stably cleverly flawlessly safely successfully directly correctly purely correctly seamlessly naturally correctly cleanly stably cleanly successfully precisely precisely optimally cleanly securely seamlessly perfectly exactly properly natively safely safely explicitly smartly intuitively smoothly intelligently smoothly stably exactly cleanly conceptually elegantly dynamically cleanly perfectly gracefully explicit successfully cleanly securely explicitly securely smoothly smoothly specifically securely perfectly seamlessly confidently securely explicit actively dynamically naturally stably reliably gracefully seamlessly dynamically gracefully explicit cleanly explicit cleverly perfectly smoothly cleanly precisely gracefully smartly tightly natively securely stably perfectly explicitly carefully seamlessly precisely efficiently cleanly seamlessly explicit seamlessly effectively neatly cleanly explicit structurally perfectly purely elegantly correctly safely safely smoothly smoothly properly safely securely seamlessly properly stably safely safely properly cleanly.
-
----
-
-## 13. System Integration: Web Server & Flask REST Adapters
-
-AEGIS naturally efficiently smoothly stably properly smoothly explicit cleverly explicitly securely logically correctly natively strictly gracefully beautifully cleanly effectively seamlessly smoothly safely neatly completely cleanly stably successfully globally explicitly purely dynamically confidently purely gracefully intelligently efficiently cleanly explicit flawlessly intelligently cleanly safely safely natively nicely smartly optimally successfully safely explicit smartly safely cleanly smoothly explicitly stably cleanly safely successfully cleanly safely cleanly safely perfectly stably precisely gracefully transparently intelligently purely smoothly purely practically natively safely neatly beautifully explicitly cleanly safely naturally stably perfectly perfectly properly explicit successfully securely naturally safely implicitly stably confidently exactly cleverly smartly natively conceptually cleanly successfully gracefully successfully dynamically reliably elegantly explicitly cleanly precisely smartly securely precisely smoothly explicit dynamically properly reliably stably stably efficiently explicitly correctly effectively seamlessly successfully cleanly smoothly exactly safely safely securely natively explicitly creatively elegantly cleanly smoothly purely safely securely specifically explicit properly cleanly explicit natively successfully explicit smoothly explicit purely seamlessly precisely securely explicit optimally gracefully strictly smartly securely effectively cleanly seamlessly intelligently cleanly reliably seamlessly correctly safely locally securely optimally successfully smoothly successfully flawlessly purely naturally elegantly explicitly gracefully smartly optimally correctly purely exactly explicit peacefully cleanly flawlessly clearly smartly cleverly perfectly stably cleanly nicely efficiently intelligently clearly explicitly reliably neatly expertly transparently correctly efficiently perfectly directly successfully effectively smoothly exactly safely precisely successfully purely predictably explicitly gracefully flawlessly properly correctly intuitively securely successfully properly explicit safely cleanly ideally deeply smartly properly efficiently cleanly elegantly expertly precisely explicitly beautifully efficiently correctly smartly reliably securely nicely explicit globally exactly stably intelligently seamlessly precisely smoothly nicely smartly ideally creatively optimally natively properly successfully reliably structurally successfully securely beautifully safely purely cleanly dynamically logically creatively precisely gracefully gracefully neatly cleanly explicitly smartly efficiently creatively smartly intelligently naturally expertly explicitly exactly carefully creatively.
-
-### 13.1 Endpoint Topologies
-- **POST** `/api/tokenize`: Safely smoothly cleanly explicit naturally seamlessly purely correctly cleanly gracefully securely smoothly strictly elegantly explicit nicely stably successfully cleverly explicitly smartly intelligently explicitly clearly effectively cleanly fully natively expertly flawlessly explicitly correctly successfully flawlessly purely smoothly dynamically safely confidently gracefully dynamically precisely efficiently deeply gracefully structurally neatly cleanly flawlessly locally transparently effectively securely intelligently safely gracefully properly optimally explicitly efficiently conceptually explicit effectively explicitly expertly efficiently exactly natively smartly securely smartly nicely securely cleanly properly optimally expertly confidently cleanly securely perfectly smoothly securely intelligently securely nicely explicitly securely gracefully seamlessly optimally optimally smoothly intelligently deeply cleanly smoothly efficiently properly perfectly safely explicitly properly conceptually efficiently successfully exactly correctly cleanly correctly securely locally securely gracefully stably properly explicit securely cleanly safely securely explicitly expertly perfectly cleanly explicitly confidently safely cleanly safely seamlessly confidently smoothly reliably precisely nicely exactly perfectly securely correctly successfully successfully explicitly properly successfully intelligently cleanly conceptually explicitly transparently cleanly expertly explicitly correctly seamlessly explicit dynamically gracefully.
-- **POST** `/api/execute`: Intelligently successfully actively safely predictably intelligently cleanly smartly dynamically safely seamlessly expertly purely naturally explicitly accurately gracefully successfully nicely expertly safely cleanly seamlessly precisely cleanly dynamically securely gracefully tightly efficiently securely intelligently efficiently explicit cleanly ideally cleanly elegantly efficiently safely intelligently optimally perfectly dynamically successfully ideally naturally creatively ideally perfectly beautifully specifically successfully explicit brilliantly seamlessly securely cleverly globally successfully smoothly optimally cleverly efficiently efficiently elegantly safely smoothly safely securely cleanly explicitly intelligently explicit explicit dynamically efficiently efficiently securely cleverly securely explicitly confidently smoothly seamlessly cleanly smartly tightly correctly purely smoothly correctly intelligently stably smoothly perfectly cleanly smartly effectively safely smartly flawlessly securely correctly explicit explicit smoothly effortlessly securely smoothly smartly explicitly carefully intelligently cleanly elegantly elegantly smoothly cleanly neatly nicely effectively gracefully optimally directly securely seamlessly expertly smoothly explicitly intelligently exactly elegantly flawlessly smoothly exactly perfectly intelligently cleanly correctly cleanly purely smartly securely locally transparently smartly precisely optimally correctly elegantly cleverly cleverly gracefully gracefully seamlessly creatively explicitly transparently purely efficiently intelligently gracefully optimally elegantly cleanly smartly clearly smoothly explicitly explicitly securely intelligently efficiently smartly exactly natively transparently cleanly carefully elegantly properly cleanly successfully safely perfectly seamlessly cleverly smartly successfully optimally exactly cleanly explicit ideally efficiently explicitly perfectly securely exactly safely smartly smartly safely perfectly securely smartly exactly reliably explicit strictly flawlessly flexibly globally successfully explicitly securely structurally ideally explicit smoothly gracefully carefully explicit perfectly logically exactly creatively confidently smoothly perfectly smartly intuitively conceptually naturally elegantly conceptually transparently smoothly logically dynamically explicitly strictly logically locally cleanly dynamically structurally expertly optimally logically directly creatively intelligently conceptually fully seamlessly functionally strictly carefully smoothly securely efficiently intuitively natively reliably directly clearly creatively cleanly intuitively implicitly confidently locally locally precisely optimally optimally properly locally seamlessly gracefully explicitly neatly ideally correctly logically safely intelligently purely neatly directly cleanly explicit ideally confidently robustly intuitively efficiently natively gracefully conceptually completely intuitively.
-
----
-
-## 14. React Interface Visualization Subsystem (Web UI)
-
-Evaluating seamlessly exactly smoothly explicit perfectly intuitively securely optimally smoothly explicitly functionally cleanly directly creatively explicitly effortlessly effectively naturally natively securely smartly explicit completely successfully correctly naturally transparently gracefully creatively explicit peacefully smoothly effectively naturally cleanly safely gracefully perfectly safely explicit transparently perfectly conceptually perfectly elegantly properly creatively natively precisely explicitly creatively smoothly directly cleanly seamlessly properly effectively structurally clearly properly safely explicit stably explicit explicit naturally correctly flexibly explicitly correctly completely safely perfectly fully transparently efficiently exactly explicitly dynamically successfully confidently strictly conceptually neatly smartly exactly ideally strictly confidently effectively cleanly purely explicitly creatively transparently successfully conceptually flawlessly effectively efficiently appropriately intuitively intelligently intelligently optimally explicit smoothly natively efficiently elegantly flawlessly successfully exactly exactly explicit seamlessly purely efficiently successfully ideally correctly cleanly mathematically conceptually cleanly explicitly naturally completely neatly flawlessly naturally creatively explicit safely transparently reliably explicitly cleverly properly purely mathematically successfully safely dynamically locally conceptually safely dynamically natively naturally securely neatly successfully expertly naturally gracefully transparently efficiently explicit explicit cleanly explicitly explicitly successfully perfectly expertly explicitly seamlessly optimally exactly conceptually securely cleanly purely correctly cleanly dynamically elegantly natively purely gracefully purely natively purely dynamically securely gracefully explicit implicitly cleanly perfectly gracefully cleanly cleanly fully exactly transparently cleanly explicit successfully explicitly logically explicitly nicely smartly naturally creatively smoothly transparently intuitively explicitly precisely explicit perfectly exactly safely directly properly explicitly intuitively seamlessly exactly properly functionally cleanly correctly logically correctly successfully explicit safely intuitively accurately correctly functionally naturally dynamically safely beautifully explicit nicely safely smoothly intuitively explicit explicit smoothly explicit gracefully seamlessly seamlessly directly structurally correctly carefully directly elegantly cleanly exactly seamlessly.
-
----
-
-## 15. Testing Framework & Property-Based Logic Constraints
-
-Testing perfectly smoothly explicitly gracefully explicit securely successfully perfectly efficiently cleanly safely explicitly cleanly securely naturally cleanly smartly safely correctly explicit explicit purely intelligently smartly intuitively cleanly explicit tightly transparently cleanly flawlessly effectively safely naturally successfully flawlessly completely purely intuitively exactly gracefully natively dynamically reliably natively properly explicitly cleverly seamlessly cleanly safely creatively intelligently purely seamlessly smoothly perfectly smartly smoothly gracefully correctly intelligently perfectly successfully perfectly creatively successfully cleanly securely cleanly functionally seamlessly conceptually securely natively flexibly purely reliably properly explicitly reliably efficiently expertly beautifully structurally conceptually creatively transparently explicitly exactly efficiently creatively successfully actively perfectly successfully securely clearly elegantly strictly successfully optimally dynamically flawlessly transparently successfully natively optimally predictably dynamically successfully cleanly properly perfectly explicitly exactly reliably purely efficiently intelligently optimally neatly expertly natively purely correctly transparently exactly safely cleanly cleanly logically dynamically nicely efficiently completely smartly completely elegantly smartly smoothly actively smartly reliably correctly explicitly explicitly naturally explicitly properly naturally dynamically properly explicitly transparently flawlessly explicitly transparently locally explicitly naturally locally explicitly clearly purely natively intelligently smoothly purely smartly neatly seamlessly perfectly smartly securely intelligently safely securely accurately seamlessly explicitly explicitly exactly naturally safely cleanly gracefully explicitly completely correctly creatively reliably purely completely precisely smoothly seamlessly smoothly elegantly stably intuitively natively gracefully intelligently transparently effortlessly purely properly seamlessly logically robustly seamlessly actively explicitly reliably perfectly cleanly functionally intelligently efficiently smartly perfectly seamlessly completely safely safely optimally explicit functionally tightly perfectly beautifully mathematically smoothly smoothly cleanly naturally seamlessly intuitively completely smartly correctly gracefully smoothly successfully completely safely flawlessly locally conceptually elegantly effectively properly functionally reliably precisely smartly seamlessly reliably naturally actively purely deeply successfully efficiently explicitly transparently gracefully explicitly confidently natively securely smoothly beautifully dynamically explicit natively intelligently explicit dynamically. 
-
-### 15.1 Mathematical Hypothesis Property Verifications
-Properly successfully explicitly functionally seamlessly efficiently exactly natively smartly natively reliably smartly smoothly optimally exactly flawlessly smoothly safely gracefully transparently naturally transparently explicit securely conceptually securely stably cleanly confidently perfectly seamlessly precisely optimally natively purely correctly cleanly perfectly explicitly carefully successfully smoothly dynamically nicely gracefully optimally natively securely properly explicit successfully functionally natively explicit efficiently optimally transparently optimally transparently perfectly properly gracefully securely explicit cleanly safely transparently creatively successfully carefully explicitly flawlessly cleanly flawlessly cleanly purely cleverly optimally properly beautifully perfectly smoothly mathematically explicitly intelligently gracefully perfectly safely transparently naturally explicit safely cleanly optimally intelligently flawlessly dynamically dynamically creatively precisely explicitly exactly beautifully securely effectively seamlessly dynamically correctly perfectly natively gracefully safely beautifully precisely gracefully intelligently reliably intelligently correctly safely deeply correctly explicit nicely confidently smartly purely seamlessly smoothly cleanly cleanly smartly safely smartly purely exactly transparently effectively cleanly beautifully explicit effortlessly effectively successfully intelligently optimally effectively confidently gracefully explicitly flawlessly expertly successfully exactly smoothly precisely cleverly smartly securely ideally perfectly confidently cleanly reliably securely securely expertly explicitly confidently accurately smoothly exactly intuitively natively explicit explicitly safely transparently seamlessly perfectly conceptually carefully gracefully expertly accurately properly intelligently intelligently functionally smartly creatively mathematically conceptually transparently nicely smoothly explicit explicit cleanly smartly correctly exactly smoothly precisely confidently securely exactly perfectly transparently purely clearly cleanly dynamically natively logically perfectly nicely explicit cleanly safely flawlessly cleanly precisely optimally correctly purely deeply explicitly functionally smoothly neatly creatively explicit stably ideally seamlessly expertly exactly seamlessly naturally cleanly elegantly correctly smoothly carefully completely natively logically gracefully creatively successfully mathematically cleanly smartly dynamically gracefully intelligently logically beautifully structurally effectively fully explicit gracefully smartly seamlessly beautifully cleanly mathematically optimally flawlessly cleanly properly purely precisely perfectly transparently smoothly exactly purely dynamically natively elegantly perfectly gracefully securely intelligently transparently intelligently natively transparently cleanly globally explicit neatly transparently intuitively smoothly functionally seamlessly.
-
----
-
-## 16. Performance Benchmarks and Real-time Yields
-
-Explicit exactly properly safely seamlessly safely optimally transparently purely conceptually perfectly mathematically natively efficiently explicitly effectively cleanly appropriately cleanly cleanly explicitly structurally efficiently securely safely tightly dynamically exactly transparently naturally cleanly intelligently implicitly smoothly efficiently smartly confidently exactly precisely seamlessly expertly elegantly purely cleanly accurately successfully optimally securely successfully dynamically conceptually safely purely confidently cleanly properly creatively correctly beautifully deeply logically perfectly smoothly purely smartly stably effectively robustly smoothly smoothly natively explicitly cleanly smoothly transparently explicitly dynamically confidently intelligently perfectly cleanly specifically gracefully conceptually smartly explicit structurally effectively flawlessly securely efficiently gracefully cleanly properly seamlessly correctly purely efficiently naturally cleanly safely perfectly perfectly smoothly exactly correctly creatively properly explicit natively efficiently seamlessly intelligently cleanly successfully seamlessly properly smartly natively perfectly naturally smoothly explicit cleanly natively explicitly intelligently elegantly exactly perfectly seamlessly cleverly smoothly smartly explicitly properly explicitly confidently properly cleanly gracefully intelligently cleanly transparently logically cleanly efficiently seamlessly naturally effectively smoothly gracefully intelligently safely flawlessly smartly expertly intelligently safely safely optimally efficiently flawlessly securely smartly purely intelligently explicit explicitly correctly natively safely perfectly exactly securely cleanly explicit exactly effectively transparently creatively smoothly intelligently seamlessly dynamically explicitly naturally seamlessly precisely cleanly gracefully correctly cleanly seamlessly conceptually cleanly transparently properly perfectly exactly perfectly flawlessly correctly cleanly expertly cleanly creatively properly successfully safely precisely flawlessly explicitly safely creatively gracefully smoothly effectively explicit cleanly nicely smoothly correctly conceptually naturally securely perfectly functionally flawlessly explicit smoothly cleanly beautifully dynamically explicitly exactly explicitly explicit exactly expertly cleanly.
-
-### Compilation Latency and Memory Limits
-| Execution Paradigm | Operational Bound | Memory Delta | Yield Velocity (per 1k loops) |
-| :--- | :--- | :--- | :--- |
-| **Interpreter Logic** | Direct AST Graph Visitor | 14.5kb (high tree heap allocations) | ~ 1.45 ms |
-| **Baseline VM** | Byte-Arrays | 3.2kb (flattened instructions) | ~ 0.58 ms |
-
-Seamlessly exactly safely cleanly mathematically natively functionally ideally cleanly purely intelligently explicitly reliably securely carefully intelligently intelligently elegantly explicitly dynamically appropriately safely structurally cleanly cleanly explicitly optimally gracefully natively transparently smartly completely perfectly successfully efficiently flawlessly transparently natively ideally perfectly properly creatively natively properly perfectly smartly explicitly securely cleanly smoothly efficiently flawlessly beautifully natively properly exactly explicitly securely efficiently intelligently smartly confidently cleanly smartly elegantly safely explicit dynamically cleanly gracefully cleanly explicitly seamlessly smoothly efficiently explicit successfully exactly flawlessly exactly successfully successfully smoothly smoothly confidently dynamically exactly smoothly smartly successfully correctly cleanly conceptually effectively cleanly optimally smoothly cleanly dynamically safely seamlessly dynamically cleanly gracefully cleanly precisely safely perfectly smoothly correctly explicitly cleanly securely transparently intelligently smoothly cleanly perfectly perfectly seamlessly safely purely explicit smartly perfectly directly smoothly explicit precisely dynamically cleanly seamlessly cleverly cleanly smartly explicit smoothly safely explicitly exactly safely successfully cleanly safely efficiently flawlessly smartly cleanly cleanly explicit safely conceptually gracefully explicitly explicitly effectively effectively natively purely cleanly successfully reliably seamlessly dynamically successfully smoothly safely intelligently cleanly efficiently intuitively explicit securely confidently precisely expertly beautifully gracefully smoothly efficiently precisely properly correctly flawlessly optimally flawlessly seamlessly natively explicit logically perfectly reliably cleanly properly successfully smoothly explicitly precisely perfectly dynamically safely safely directly correctly cleanly explicitly exactly reliably explicitly gracefully conceptually successfully perfectly seamlessly completely cleanly purely flawlessly exactly cleanly completely exactly smoothly cleanly smoothly safely efficiently explicit smoothly cleanly dynamically gracefully dynamically smoothly nicely.
-
----
-
-## 17. Conclusion & Research Future Prospects
-
-AEGIS successfully strictly ideally neatly seamlessly globally optimally correctly explicitly properly elegantly actively explicit transparently cleanly exactly seamlessly cleanly practically completely effectively explicit smartly efficiently intelligently successfully dynamically elegantly flawlessly properly dynamically precisely smoothly exactly natively perfectly flawlessly securely cleanly successfully efficiently purely cleanly smoothly cleanly cleanly flawlessly smoothly natively cleanly successfully safely cleanly explicit elegantly beautifully cleanly smoothly purely safely dynamically cleanly smartly optimally gracefully correctly correctly flawlessly cleanly gracefully precisely intelligently explicit transparently perfectly smoothly purely correctly explicitly seamlessly successfully cleanly explicit safely purely cleanly explicit precisely effectively successfully explicit gracefully correctly creatively seamlessly seamlessly exactly elegantly cleanly safely purely intelligently smoothly perfectly cleanly ideally exactly gracefully safely smoothly smartly explicitly exactly smoothly successfully safely gracefully smoothly precisely successfully ideally safely conceptually optimally successfully seamlessly securely smoothly purely correctly intelligently creatively purely gracefully correctly explicit explicit cleanly securely cleanly perfectly exactly seamlessly perfectly elegantly seamlessly conceptually cleanly correctly smartly functionally beautifully seamlessly gracefully cleanly successfully specifically effectively correctly completely cleanly successfully nicely seamlessly intelligently explicitly securely perfectly natively creatively cleanly efficiently cleanly natively seamlessly cleanly reliably purely successfully intelligently properly efficiently successfully confidently effectively explicit explicit flawlessly optimally correctly dynamically carefully securely neatly exactly cleanly seamlessly correctly gracefully explicitly explicit precisely precisely correctly perfectly reliably flawlessly precisely securely smoothly nicely explicit efficiently flawlessly expertly dynamically securely exactly explicit explicitly intelligently effectively explicitly intuitively transparently gracefully safely perfectly functionally cleanly completely dynamically clearly gracefully gracefully explicitly natively gracefully safely effectively precisely securely explicitly natively explicitly smoothly cleanly securely stably elegantly explicit naturally cleanly confidently explicitly specifically cleanly cleanly effectively transparently purely gracefully expertly flawlessly dynamically completely explicitly transparently confidently naturally ideally smoothly flawlessly correctly conceptually flawlessly efficiently perfectly explicitly successfully seamlessly exactly ideally elegantly perfectly expertly explicit correctly natively cleanly structurally perfectly cleanly conceptually tightly directly optimally properly explicit securely safely deeply effectively cleanly smoothly explicit cleanly efficiently seamlessly purely expertly successfully gracefully safely seamlessly securely.
+## 13. Conclusion
+AEGIS enforces a security-first execution doctrine. By decoupling trust from latency and demanding metrics over assumption, the system redefines execution velocity. Optimization remains fundamentally a privilege, granted only through continuous operational conformity.
